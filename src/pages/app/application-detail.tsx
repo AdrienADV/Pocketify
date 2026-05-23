@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react"
-import { useParams } from "react-router"
-import { setupPage } from "@capgo/capacitor-transitions/react"
+import { useParams, useNavigate } from "react-router"
+import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
 import { useMutation } from "@tanstack/react-query"
 import { $api } from "@/lib/api"
 import { fetchClient } from "@/lib/api/client"
@@ -71,10 +71,13 @@ export default function ApplicationDetail() {
     { params: { path: { uuid: uuid! } } },
   )
 
-  const { data: deployments, isPending: deploymentsPending, refetch: refetchDeployments } = $api.useQuery(
+  const { data: deploymentsRaw, isPending: deploymentsPending, refetch: refetchDeployments } = $api.useQuery(
     "get", "/deployments/applications/{uuid}",
     { params: { path: { uuid: uuid! }, query: { take: 10 } } },
   )
+
+  // L'API retourne { count, deployments: [...] } mais le schema OpenAPI déclare Application[]
+  const deployments = ((deploymentsRaw as unknown as { deployments?: DeploymentSchema[] })?.deployments) ?? []
 
   const handleRefresh = () => Promise.all([refetchApp(), refetchDeployments()])
 
@@ -106,13 +109,14 @@ export default function ApplicationDetail() {
 
   return (
     <cap-page ref={pageRef}>
+      <div className="flex flex-col h-full">
       <Header title={app?.name ?? "Application"} />
-      <PullToRefresh onRefresh={handleRefresh}>
-        <div className="p-4 space-y-5 pb-6">
+      <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
+        <div className="p-4 space-y-5 pb-(--safe-area-bottom)">
 
-          {/* Status + Actions */}
+          {/* Status */}
           <Card>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-4">
               {appPending ? (
                 <div className="flex items-center gap-3">
                   <Skeleton className="size-3 rounded-full" />
@@ -127,31 +131,32 @@ export default function ApplicationDetail() {
                   )}
                 </div>
               )}
-
-              {!isTransitioning && !appPending && (
-                <div className="flex gap-2 flex-wrap">
-                  {(isRunning || isError) && (
-                    <Button size="sm" variant="secondary" className="gap-1.5" disabled={actionPending} onClick={() => restart()}>
-                      {restarting ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCw className="size-3.5" />}
-                      Restart
-                    </Button>
-                  )}
-                  {(isStopped || isError) && (
-                    <Button size="sm" variant="secondary" className="gap-1.5" disabled={actionPending} onClick={() => start()}>
-                      {starting ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
-                      Deploy
-                    </Button>
-                  )}
-                  {isRunning && (
-                    <Button size="sm" variant="secondary" className="gap-1.5" disabled={actionPending} onClick={() => stop()}>
-                      {stopping ? <Loader2 className="size-3.5 animate-spin" /> : <Square className="size-3.5" />}
-                      Stop
-                    </Button>
-                  )}
-                </div>
-              )}
             </CardContent>
           </Card>
+
+          {/* Actions */}
+          {!isTransitioning && !appPending && (
+            <div className="flex gap-3">
+              {(isRunning || isError) && (
+                <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => restart()}>
+                  {restarting ? <Loader2 className="size-5 animate-spin" /> : <RotateCw className="size-5" />}
+                  Restart
+                </Button>
+              )}
+              {(isStopped || isError) && (
+                <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => start()}>
+                  {starting ? <Loader2 className="size-5 animate-spin" /> : <Play className="size-5" />}
+                  Deploy
+                </Button>
+              )}
+              {isRunning && (
+                <Button variant="outline" className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => stop()}>
+                  {stopping ? <Loader2 className="size-5 animate-spin" /> : <Square className="size-5" />}
+                  Stop
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Info */}
           {appPending ? (
@@ -186,8 +191,8 @@ export default function ApplicationDetail() {
             </h2>
             {deploymentsPending ? (
               <DeploymentsSkeleton />
-            ) : deployments && deployments.length > 0 ? (
-              (deployments as unknown as DeploymentSchema[]).map((d) => (
+            ) : deployments.length > 0 ? (
+              deployments.map((d) => (
                 <DeploymentRow key={d.deployment_uuid} deployment={d} />
               ))
             ) : (
@@ -200,6 +205,7 @@ export default function ApplicationDetail() {
           </section>
         </div>
       </PullToRefresh>
+      </div>
     </cap-page>
   )
 }
@@ -221,8 +227,16 @@ function InfoRow({
 }
 
 function DeploymentRow({ deployment }: Readonly<{ deployment: DeploymentSchema }>) {
+  const navigate = useNavigate()
+
+  const goToLogs = () => {
+    if (!deployment.deployment_uuid) return
+    setDirection("forward")
+    navigate(`/deployments/${deployment.deployment_uuid}`)
+  }
+
   return (
-    <Card>
+    <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={goToLogs}>
       <CardContent className="p-3 flex items-start gap-3">
         <div className={cn("size-2 rounded-full mt-1.5 shrink-0", deploymentStatusColor(deployment.status ?? ""))} />
         <div className="flex-1 min-w-0">

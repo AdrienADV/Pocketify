@@ -164,6 +164,7 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    touch-action: manipulation;
   }
 
   html,
@@ -174,5 +175,10 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Empêche le zoom iOS au focus sur les inputs (font-size < 16px déclenche le zoom) */
+  input, textarea, select {
+    font-size: max(16px, 1em);
   }
 }

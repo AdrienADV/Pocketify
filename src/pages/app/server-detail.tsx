@@ -79,9 +79,10 @@ export default function ServerDetail() {
 
   return (
     <cap-page ref={pageRef}>
-      <Header title={server?.name ?? "Server"} />
-      <PullToRefresh onRefresh={handleRefresh}>
-        <div className="p-4 space-y-5 pb-6">
+      <div className="flex flex-col h-full">
+        <Header title={server?.name ?? "Server"} />
+        <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
+        <div className="p-4 space-y-5 pb-(--safe-area-bottom)">
 
           {/* Status */}
           <Card>
@@ -148,7 +149,8 @@ export default function ServerDetail() {
             )}
           </section>
         </div>
-      </PullToRefresh>
+        </PullToRefresh>
+      </div>
     </cap-page>
   )
 }
