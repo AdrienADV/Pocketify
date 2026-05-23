@@ -8,9 +8,10 @@ interface HeaderProps {
     title?: string;
     children?: React.ReactNode;
     className?: string;
+    showBack?: boolean;
 }
 
-export default function Header({ title, children, className }: HeaderProps) {
+export default function Header({ title, children, className, showBack = true }: HeaderProps) {
     const navigate = useNavigate();
 
     const goBack = () => {
@@ -26,14 +27,16 @@ export default function Header({ title, children, className }: HeaderProps) {
             )}
         >
             <div className="relative flex items-center justify-center px-4 h-12">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute left-4"
-                    onClick={goBack}
-                >
-                    <ChevronLeft className="size-4" />
-                </Button>
+                {showBack && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute left-4"
+                        onClick={goBack}
+                    >
+                        <ChevronLeft className="size-4" />
+                    </Button>
+                )}
                 {title && <p className="text-md">{title}</p>}
                 {children}
             </div>
