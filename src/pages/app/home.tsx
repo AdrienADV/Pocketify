@@ -1,11 +1,12 @@
 import { useRef, useEffect, useMemo } from "react"
-import { setupPage } from "@capgo/capacitor-transitions/react"
+import { useNavigate } from "react-router"
+import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
 import { $api } from "@/lib/api"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { Server, AppWindow, Rocket } from "lucide-react"
+import { Server, AppWindow, Rocket, ChevronRight } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
@@ -25,6 +26,7 @@ function serverStatusColor(isReachable: boolean, isUsable: boolean) {
 
 export default function Home() {
   const pageRef = useRef<HTMLElement>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (pageRef.current) return setupPage(pageRef.current)
@@ -51,6 +53,11 @@ export default function Home() {
   const handleRefresh = () =>
     Promise.all([refetchTeam(), refetchServers(), refetchApps(), refetchDeployments()])
 
+  const goToApplications = () => {
+    setDirection("forward")
+    navigate("/applications")
+  }
+
   return (
     <cap-page ref={pageRef}>
       <Header title={team?.name ?? "Coolify"} showBack={false} />
@@ -59,7 +66,7 @@ export default function Home() {
         <div className="p-4 space-y-6 pb-6">
           <div className="grid grid-cols-3 gap-2">
             <StatCard icon={Server} value={isLoading ? null : stats.serversOnline} label="Online" sublabel={serverSublabel} />
-            <StatCard icon={AppWindow} value={isLoading ? null : stats.appsRunning} label="Running" sublabel={appSublabel} />
+            <StatCard icon={AppWindow} value={isLoading ? null : stats.appsRunning} label="Running" sublabel={appSublabel} onClick={goToApplications} />
             <StatCard icon={Rocket} value={isLoading ? null : stats.deploymentsActive} label="Deploying" sublabel={isLoading ? null : "active"} />
           </div>
 
@@ -130,14 +137,16 @@ function StatCard({
   value,
   label,
   sublabel,
+  onClick,
 }: Readonly<{
   icon: React.ElementType
   value: number | null
   label: string
   sublabel: string | null
+  onClick?: () => void
 }>) {
   return (
-    <Card>
+    <Card className={onClick ? "cursor-pointer active:scale-[0.97] transition-transform" : undefined} onClick={onClick}>
       <CardContent className="p-3 flex flex-col items-center text-center gap-1">
         <Icon className="size-4 text-muted-foreground" />
         {value === null
@@ -149,6 +158,7 @@ function StatCard({
           ? <Skeleton className="h-3 w-10" />
           : <p className="text-[10px] text-muted-foreground/60 leading-tight">{sublabel}</p>
         }
+        {onClick && <ChevronRight className="size-3 text-muted-foreground/40 mt-0.5" />}
       </CardContent>
     </Card>
   )
@@ -193,11 +203,18 @@ function DeploymentStatusBadge({ status }: Readonly<{ status: string }>) {
 }
 
 function ServerCard({ server }: Readonly<{ server: ServerSchema }>) {
+  const navigate = useNavigate()
   const isReachable = server.settings?.is_reachable ?? false
   const isUsable = server.settings?.is_usable ?? false
 
+  const goToDetail = () => {
+    if (!server.uuid) return
+    setDirection("forward")
+    navigate(`/servers/${server.uuid}`)
+  }
+
   return (
-    <Card>
+    <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={goToDetail}>
       <CardContent className="p-4 flex items-center gap-3">
         <div className={cn("size-2.5 rounded-full shrink-0", serverStatusColor(isReachable, isUsable))} />
         <div className="flex-1 min-w-0">

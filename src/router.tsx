@@ -7,6 +7,9 @@ import TabLayout from "./layouts/tab-layout"
 import Onboarding from "./pages/onboarding"
 import Home from "./pages/app/home"
 import Settings from "./pages/app/settings"
+import Applications from "./pages/app/applications"
+import ApplicationDetail from "./pages/app/application-detail"
+import ServerDetail from "./pages/app/server-detail"
 
 interface RouterProps {
   location: Location
@@ -24,6 +27,9 @@ export default function Router({ location }: Readonly<RouterProps>) {
           <Route index element={<Home />} />
           <Route path="settings" element={<Settings />} />
         </Route>
+        <Route path="applications" element={<Applications />} />
+        <Route path="applications/:uuid" element={<ApplicationDetail />} />
+        <Route path="servers/:uuid" element={<ServerDetail />} />
       </Route>
 
       <Route
