@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { $api, fetchClient } from "@/lib/api/client"
+import { deploymentKeys } from "@/lib/api/deployments"
 import { toast } from "sonner"
 
 export const applicationKeys = {
@@ -27,6 +28,7 @@ export function useRestartApplication(uuid: string) {
     onSuccess: () => {
       toast.success("Restart queued")
       void queryClient.invalidateQueries({ queryKey: applicationKeys.detail(uuid) })
+      void queryClient.invalidateQueries({ queryKey: deploymentKeys.byApplication(uuid) })
     },
     onError: () => toast.error("Failed to restart"),
   })
@@ -39,6 +41,7 @@ export function useStartApplication(uuid: string) {
     onSuccess: () => {
       toast.success("Deployment queued")
       void queryClient.invalidateQueries({ queryKey: applicationKeys.detail(uuid) })
+      void queryClient.invalidateQueries({ queryKey: deploymentKeys.byApplication(uuid) })
     },
     onError: () => toast.error("Failed to start"),
   })
@@ -51,6 +54,7 @@ export function useStopApplication(uuid: string) {
     onSuccess: () => {
       toast.success("Stop requested")
       void queryClient.invalidateQueries({ queryKey: applicationKeys.detail(uuid) })
+      void queryClient.invalidateQueries({ queryKey: deploymentKeys.byApplication(uuid) })
     },
     onError: () => toast.error("Failed to stop"),
   })
