@@ -47,7 +47,7 @@ export default function Settings() {
     ? `${currentToken.slice(0, 4)}${"•".repeat(8)}${currentToken.slice(-4)}`
     : "•".repeat(currentToken.length)
 
-  // Auto-validation avec debounce
+  // Auto-validation with debounce
   useEffect(() => {
     if (!token.trim()) {
       setTokenStatus("idle")

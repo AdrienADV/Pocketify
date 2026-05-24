@@ -11,7 +11,7 @@ import {
   validateCredentials,
 } from "@/lib/auth"
 import { Clipboard } from "@capacitor/clipboard"
-import { ChevronLeft, ClipboardPaste, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { ChevronLeft, Eye, EyeOff, Loader2, CheckCircle2, XCircle } from "lucide-react"
 
 type HostType = "cloud" | "self-hosted"
 type TokenStatus = "idle" | "checking" | "valid" | "invalid"
@@ -198,7 +198,7 @@ export default function OnboardingToken() {
                 </Button>
               )}
 
-              {/* Statut de validation */}
+              {/* Validation status */}
               {tokenStatus === "checking" && (
                 <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <Loader2 className="size-3.5 animate-spin" />

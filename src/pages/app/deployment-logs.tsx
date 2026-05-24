@@ -18,7 +18,7 @@ function stripAnsi(str: string) {
   return str.replace(/\x1b\[[0-9;]*[mGKHF]/g, "").replace(/\r/g, "")
 }
 
-// Les logs Coolify sont un JSON : [{ command: string | null, output: string }]
+// Coolify logs are JSON: [{ command: string | null, output: string }]
 function parseLogs(raw: string): string {
   try {
     const entries = JSON.parse(raw) as { command?: string | null; output?: string }[]

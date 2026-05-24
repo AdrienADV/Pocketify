@@ -51,7 +51,7 @@ export default function Home() {
             {/* Team indicator */}
             <TeamIndicator name={team?.name} />
 
-            {/* Déploiements actifs — uniquement si en cours */}
+            {/* Active deployments — only shown when in progress */}
             {(deploymentsPending || deploymentsError || hasActiveDeployments) && (
               <section className="space-y-2">
                 <div className="flex items-center gap-2 px-0.5">
@@ -74,7 +74,7 @@ export default function Home() {
               </section>
             )}
 
-            {/* Catégories */}
+            {/* Categories */}
             <section className="space-y-2">
               <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
                 Resources
