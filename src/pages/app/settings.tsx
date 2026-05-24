@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/drawer"
 import { Clipboard } from "@capacitor/clipboard"
 import { cn } from "@/lib/utils"
-import { LogOut, Server, User, Key, Loader2, ClipboardPaste, CheckCircle2, XCircle, Eye, EyeOff, Activity, BadgeInfo } from "lucide-react"
+import { LogOut, Server, User, Key, ChevronRight, Loader2, ClipboardPaste, CheckCircle2, XCircle, Eye, EyeOff, Activity, BadgeInfo } from "lucide-react"
 import Header from "@/components/header"
 import { toast } from "sonner"
 
@@ -150,7 +150,7 @@ export default function Settings() {
                     </div>
                     <Separator />
                     <button
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-muted/50"
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-muted/50"
                       onClick={() => setEditingToken(true)}
                     >
                       <Key className="size-4 text-muted-foreground shrink-0" />
@@ -158,7 +158,7 @@ export default function Settings() {
                         <p className="text-xs text-muted-foreground">API Token</p>
                         <p className="text-sm font-mono truncate">{maskedToken}</p>
                       </div>
-                      <span className="text-xs text-primary shrink-0">Edit</span>
+                      <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                     </button>
                   </CardContent>
                 </Card>
