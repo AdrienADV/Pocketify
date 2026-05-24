@@ -9,9 +9,14 @@ export const deploymentKeys = {
   detail: (uuid: string) => ["get", "/deployments/{uuid}", { params: { path: { uuid } } }] as const,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useDeployments(options?: Record<string, any>) {
-  return $api.useQuery("get", "/deployments", {}, options)
+export function useDeployments() {
+  return $api.useQuery("get", "/deployments", {}, {
+    refetchInterval: (query) => {
+      const data = query.state.data
+      if (!data || data.length === 0) return false
+      return data.some((d) => d.status === "in_progress" || d.status === "queued") ? 3000 : false
+    },
+  })
 }
 
 export function useApplicationDeployments(uuid: string | undefined) {

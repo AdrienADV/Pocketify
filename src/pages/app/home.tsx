@@ -29,13 +29,7 @@ export default function Home() {
   const { data: servers, isPending: serversPending, isError: serversError, refetch: refetchServers } = useServers()
   const { data: apps, isPending: appsPending, isError: appsError, refetch: refetchApps } = useApplications()
   const { data: servicesRaw, isPending: servicesPending, isError: servicesError, refetch: refetchServices } = useServices()
-  const { data: deployments, isPending: deploymentsPending, isError: deploymentsError, refetch: refetchDeployments } = useDeployments({
-    refetchInterval: (query) => {
-      const data = query.state.data
-      if (!data || data.length === 0) return false
-      return data.some((d) => d.status === "in_progress" || d.status === "queued") ? 3000 : false
-    },
-  })
+  const { data: deployments, isPending: deploymentsPending, isError: deploymentsError, refetch: refetchDeployments } = useDeployments()
 
   const hasActiveDeployments = deployments && deployments.length > 0
 
@@ -127,7 +121,7 @@ export default function Home() {
 
 /* ── Team indicator ── */
 
-function TeamIndicator({ name }: Readonly<{ name: string | undefined }>) {
+function TeamIndicator({ name }: { name: string | undefined }) {
   return (
     <div className="flex items-center h-11 px-3.5 rounded-xl border border-input bg-background">
       {name
