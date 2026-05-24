@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
 import { useQueryClient } from "@tanstack/react-query"
-import { $api } from "@/lib/api"
+import { useCurrentTeam } from "@/lib/api/teams"
 import { clearCredentials, getApiUrl, getToken, saveCredentials, validateCredentials } from "@/lib/auth"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -37,7 +37,7 @@ export default function Settings() {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: team } = $api.useQuery("get", "/teams/current")
+  const { data: team } = useCurrentTeam()
   const apiUrl = getApiUrl().replace("/api/v1", "")
   const currentToken = getToken() ?? ""
   const maskedToken = currentToken.length > 8

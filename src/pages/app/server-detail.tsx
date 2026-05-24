@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react"
 import { useParams } from "react-router"
 import { setupPage } from "@capgo/capacitor-transitions/react"
-import { $api } from "@/lib/api"
+import { useServer, useServerResources } from "@/lib/api/servers"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils"
 import { Cpu, Globe, Network, User } from "lucide-react"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
+import { statusDotColor } from "@/lib/status-utils"
+import { ErrorCard } from "@/components/error-card"
 
 type Resource = {
   id?: number
@@ -16,14 +18,6 @@ type Resource = {
   name?: string
   type?: string
   status?: string
-}
-
-function resourceStatusColor(status: string | undefined) {
-  const s = (status ?? "").toLowerCase()
-  if (s.startsWith("running")) return "bg-success"
-  if (s.includes("exited") || s.includes("error") || s.includes("unhealthy")) return "bg-destructive"
-  if (s.includes("starting") || s.includes("restarting") || s.includes("degraded")) return "bg-warning"
-  return "bg-muted-foreground"
 }
 
 function resourceTypeLabel(type: string | undefined) {
@@ -50,15 +44,8 @@ export default function ServerDetail() {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: server, isPending: serverPending, refetch: refetchServer } = $api.useQuery(
-    "get", "/servers/{uuid}",
-    { params: { path: { uuid: uuid! } } },
-  )
-
-  const { data: resources, isPending: resourcesPending, refetch: refetchResources } = $api.useQuery(
-    "get", "/servers/{uuid}/resources",
-    { params: { path: { uuid: uuid! } } },
-  )
+  const { data: server, isPending: serverPending, isError: serverError, refetch: refetchServer } = useServer(uuid)
+  const { data: resources, isPending: resourcesPending, isError: resourcesError, refetch: refetchResources } = useServerResources(uuid)
 
   const handleRefresh = () => Promise.all([refetchServer(), refetchResources()])
 
@@ -84,49 +71,55 @@ export default function ServerDetail() {
         <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
         <div className="p-4 space-y-5 pb-(--safe-area-bottom)">
 
-          {/* Status */}
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              {serverPending ? (
-                <>
-                  <Skeleton className="size-3 rounded-full" />
-                  <Skeleton className="h-5 w-24" />
-                </>
-              ) : (
-                <>
-                  <div className={cn("size-3 rounded-full shrink-0", statusColor)} />
-                  <p className="text-sm font-semibold">{statusLabel}</p>
-                  {server?.proxy_type && server.proxy_type !== "none" && (
-                    <Badge variant="outline" className="text-[11px] capitalize ml-auto">
-                      {server.proxy_type}
-                    </Badge>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Info */}
-          {serverPending ? (
-            <InfoSkeleton />
+          {serverError ? (
+            <ErrorCard onRetry={() => void refetchServer()} />
           ) : (
-            <Card>
-              <CardContent className="p-0 divide-y divide-border">
-                {server?.ip && (
-                  <InfoRow icon={Globe} label="IP Address" value={server.ip} />
-                )}
-                {server?.user && (
-                  <InfoRow
-                    icon={User}
-                    label="SSH"
-                    value={`${server.user}@${server.ip ?? ""}${server.port ? `:${server.port}` : ""}`}
-                  />
-                )}
-                {server?.settings?.wildcard_domain && (
-                  <InfoRow icon={Network} label="Wildcard Domain" value={server.settings.wildcard_domain} />
-                )}
-              </CardContent>
-            </Card>
+            <>
+              {/* Status */}
+              <Card>
+                <CardContent className="p-4 flex items-center gap-3">
+                  {serverPending ? (
+                    <>
+                      <Skeleton className="size-3 rounded-full" />
+                      <Skeleton className="h-5 w-24" />
+                    </>
+                  ) : (
+                    <>
+                      <div className={cn("size-3 rounded-full shrink-0", statusColor)} />
+                      <p className="text-sm font-semibold">{statusLabel}</p>
+                      {server?.proxy_type && server.proxy_type !== "none" && (
+                        <Badge variant="outline" className="text-[11px] capitalize ml-auto">
+                          {server.proxy_type}
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Info */}
+              {serverPending ? (
+                <InfoSkeleton />
+              ) : (
+                <Card>
+                  <CardContent className="p-0 divide-y divide-border">
+                    {server?.ip && (
+                      <InfoRow icon={Globe} label="IP Address" value={server.ip} />
+                    )}
+                    {server?.user && (
+                      <InfoRow
+                        icon={User}
+                        label="SSH"
+                        value={`${server.user}@${server.ip ?? ""}${server.port ? `:${server.port}` : ""}`}
+                      />
+                    )}
+                    {server?.settings?.wildcard_domain && (
+                      <InfoRow icon={Network} label="Wildcard Domain" value={server.settings.wildcard_domain} />
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
 
           {/* Resources */}
@@ -134,7 +127,9 @@ export default function ServerDetail() {
             <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
               Resources
             </h2>
-            {resourcesPending ? (
+            {resourcesError ? (
+              <ErrorCard onRetry={() => void refetchResources()} />
+            ) : resourcesPending ? (
               <ResourcesSkeleton />
             ) : resources && resources.length > 0 ? (
               (resources as Resource[]).map((r) => (
@@ -178,7 +173,7 @@ function ResourceCard({ resource }: Readonly<{ resource: Resource }>) {
   return (
     <Card>
       <CardContent className="p-4 flex items-center gap-3">
-        <div className={cn("size-2.5 rounded-full shrink-0", resourceStatusColor(resource.status))} />
+        <div className={cn("size-2.5 rounded-full shrink-0", statusDotColor(resource.status))} />
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm leading-tight truncate">{resource.name ?? "Unnamed"}</p>
           {statusKey && (

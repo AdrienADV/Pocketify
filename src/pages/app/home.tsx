@@ -1,7 +1,11 @@
 import { useRef, useEffect } from "react"
 import { useNavigate } from "react-router"
 import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
-import { $api } from "@/lib/api"
+import { useApplications } from "@/lib/api/applications"
+import { useServers } from "@/lib/api/servers"
+import { useServices } from "@/lib/api/services"
+import { useDeployments } from "@/lib/api/deployments"
+import { useCurrentTeam } from "@/lib/api/teams"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -9,6 +13,7 @@ import { Server, AppWindow, Package, ChevronRight, Loader2 } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
+import { ErrorCard } from "@/components/error-card"
 
 type DeploymentSchema = components["schemas"]["ApplicationDeploymentQueue"]
 
@@ -20,21 +25,17 @@ export default function Home() {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: team, refetch: refetchTeam } = $api.useQuery("get", "/teams/current")
-  const { data: servers, isPending: serversPending, refetch: refetchServers } = $api.useQuery("get", "/servers")
-  const { data: apps, isPending: appsPending, refetch: refetchApps } = $api.useQuery("get", "/applications")
-  const { data: servicesRaw, isPending: servicesPending, refetch: refetchServices } = $api.useQuery("get", "/services")
-  const { data: deployments, isPending: deploymentsPending, refetch: refetchDeployments } = $api.useQuery(
-    "get", "/deployments",
-    {},
-    {
-      refetchInterval: (query) => {
-        const data = query.state.data
-        if (!data || data.length === 0) return false
-        return data.some((d) => d.status === "in_progress" || d.status === "queued") ? 3000 : false
-      },
+  const { data: team, refetch: refetchTeam } = useCurrentTeam()
+  const { data: servers, isPending: serversPending, isError: serversError, refetch: refetchServers } = useServers()
+  const { data: apps, isPending: appsPending, isError: appsError, refetch: refetchApps } = useApplications()
+  const { data: servicesRaw, isPending: servicesPending, isError: servicesError, refetch: refetchServices } = useServices()
+  const { data: deployments, isPending: deploymentsPending, isError: deploymentsError, refetch: refetchDeployments } = useDeployments({
+    refetchInterval: (query) => {
+      const data = query.state.data
+      if (!data || data.length === 0) return false
+      return data.some((d) => d.status === "in_progress" || d.status === "queued") ? 3000 : false
     },
-  )
+  })
 
   const hasActiveDeployments = deployments && deployments.length > 0
 
@@ -57,7 +58,7 @@ export default function Home() {
             <TeamIndicator name={team?.name} />
 
             {/* Déploiements actifs — uniquement si en cours */}
-            {(deploymentsPending || hasActiveDeployments) && (
+            {(deploymentsPending || deploymentsError || hasActiveDeployments) && (
               <section className="space-y-2">
                 <div className="flex items-center gap-2 px-0.5">
                   <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -69,6 +70,8 @@ export default function Home() {
                 </div>
                 {deploymentsPending ? (
                   <DeploymentsSkeleton />
+                ) : deploymentsError ? (
+                  <ErrorCard onRetry={() => void refetchDeployments()} />
                 ) : (
                   deployments!.map((d) => (
                     <DeploymentCard key={d.deployment_uuid} deployment={d} />
@@ -87,6 +90,7 @@ export default function Home() {
                 icon={AppWindow}
                 label="Applications"
                 isPending={appsPending}
+                isError={appsError}
                 total={apps?.length ?? 0}
                 activeCount={apps?.filter((a) => a.status?.toLowerCase().startsWith("running")).length ?? 0}
                 activeLabel="running"
@@ -97,6 +101,7 @@ export default function Home() {
                 icon={Package}
                 label="Services"
                 isPending={servicesPending}
+                isError={servicesError}
                 total={(servicesRaw as unknown[])?.length ?? 0}
                 onClick={() => go("/services")}
               />
@@ -105,6 +110,7 @@ export default function Home() {
                 icon={Server}
                 label="Servers"
                 isPending={serversPending}
+                isError={serversError}
                 total={servers?.length ?? 0}
                 activeCount={servers?.filter((s) => s.settings?.is_reachable && s.settings?.is_usable).length ?? 0}
                 activeLabel="online"
@@ -138,6 +144,7 @@ function ResourceCard({
   icon: Icon,
   label,
   isPending,
+  isError = false,
   total,
   activeCount,
   activeLabel,
@@ -146,6 +153,7 @@ function ResourceCard({
   icon: React.ElementType
   label: string
   isPending: boolean
+  isError?: boolean
   total: number
   activeCount?: number
   activeLabel?: string
@@ -165,9 +173,11 @@ function ResourceCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm">{label}</p>
-          {sublabel === null
-            ? <Skeleton className="h-3 w-28 mt-1" />
-            : <p className="text-xs text-muted-foreground mt-0.5">{sublabel}</p>
+          {isError
+            ? <p className="text-xs text-destructive mt-0.5">Failed to load</p>
+            : sublabel === null
+              ? <Skeleton className="h-3 w-28 mt-1" />
+              : <p className="text-xs text-muted-foreground mt-0.5">{sublabel}</p>
           }
         </div>
         <ChevronRight className="size-4 text-muted-foreground shrink-0" />

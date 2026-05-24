@@ -1,9 +1,8 @@
 import { useRef, useEffect } from "react"
 import { useParams, useNavigate } from "react-router"
 import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
-import { useMutation } from "@tanstack/react-query"
-import { $api } from "@/lib/api"
-import { fetchClient } from "@/lib/api/client"
+import { useApplication, useRestartApplication, useStartApplication, useStopApplication } from "@/lib/api/applications"
+import { useApplicationDeployments } from "@/lib/api/deployments"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -13,50 +12,10 @@ import { Play, RotateCw, Square, Loader2, GitBranch, Globe, ExternalLink, Chevro
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
-import { toast } from "sonner"
+import { statusDotColor, statusLabel, deploymentStatusColor, firstDomain, timeAgo } from "@/lib/status-utils"
+import { ErrorCard } from "@/components/error-card"
 
 type DeploymentSchema = components["schemas"]["ApplicationDeploymentQueue"]
-
-function statusDotColor(status: string) {
-  const s = status.toLowerCase()
-  if (s.startsWith("running")) return "bg-success"
-  if (s.includes("error") || s.includes("unhealthy") || s.includes("exited")) return "bg-destructive"
-  if (s.includes("starting") || s.includes("restarting")) return "bg-warning"
-  return "bg-muted-foreground"
-}
-
-function statusLabel(status: string) {
-  const s = status.toLowerCase()
-  if (s.startsWith("running")) return "Running"
-  if (s.includes("exited")) return "Stopped"
-  if (s.includes("starting")) return "Starting"
-  if (s.includes("restarting")) return "Restarting"
-  if (s.includes("error")) return "Error"
-  if (s.includes("unhealthy")) return "Unhealthy"
-  return status || "Unknown"
-}
-
-function firstDomain(fqdn: string) {
-  return fqdn.split(",")[0].trim().replace(/^https?:\/\//, "")
-}
-
-function deploymentStatusColor(status: string) {
-  if (status === "finished") return "bg-success"
-  if (status === "error" || status === "failed") return "bg-destructive"
-  if (status === "in_progress") return "bg-warning"
-  if (status === "queued") return "bg-muted-foreground"
-  return "bg-muted-foreground"
-}
-
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1) return "just now"
-  if (m < 60) return `${m}m ago`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  return `${Math.floor(h / 24)}d ago`
-}
 
 export default function ApplicationDetail() {
   const pageRef = useRef<HTMLElement>(null)
@@ -66,17 +25,10 @@ export default function ApplicationDetail() {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: app, isPending: appPending, refetch: refetchApp } = $api.useQuery(
-    "get", "/applications/{uuid}",
-    { params: { path: { uuid: uuid! } } },
-  )
+  const { data: app, isPending: appPending, isError: appError, refetch: refetchApp } = useApplication(uuid)
+  const { data: deploymentsRaw, isPending: deploymentsPending, isError: deploymentsError, refetch: refetchDeployments } = useApplicationDeployments(uuid)
 
-  const { data: deploymentsRaw, isPending: deploymentsPending, refetch: refetchDeployments } = $api.useQuery(
-    "get", "/deployments/applications/{uuid}",
-    { params: { path: { uuid: uuid! }, query: { take: 10 } } },
-  )
-
-  // L'API retourne { count, deployments: [...] } mais le schema OpenAPI déclare Application[]
+  // API returns { count, deployments: [...] } but OpenAPI schema declares Application[] — waiting for Coolify fix
   const deployments = ((deploymentsRaw as unknown as { deployments?: DeploymentSchema[] })?.deployments) ?? []
 
   const handleRefresh = () => Promise.all([refetchApp(), refetchDeployments()])
@@ -87,23 +39,9 @@ export default function ApplicationDetail() {
   const isTransitioning = status.includes("starting") || status.includes("restarting")
   const isError = status.includes("error") || status.includes("unhealthy")
 
-  const { mutate: restart, isPending: restarting } = useMutation({
-    mutationFn: () => fetchClient.GET("/applications/{uuid}/restart", { params: { path: { uuid: uuid! } } }),
-    onSuccess: () => { toast.success("Restart queued"); void refetchApp() },
-    onError: () => toast.error("Failed to restart"),
-  })
-
-  const { mutate: start, isPending: starting } = useMutation({
-    mutationFn: () => fetchClient.GET("/applications/{uuid}/start", { params: { path: { uuid: uuid! } } }),
-    onSuccess: () => { toast.success("Deployment queued"); void refetchApp() },
-    onError: () => toast.error("Failed to start"),
-  })
-
-  const { mutate: stop, isPending: stopping } = useMutation({
-    mutationFn: () => fetchClient.GET("/applications/{uuid}/stop", { params: { path: { uuid: uuid! } } }),
-    onSuccess: () => { toast.success("Stop requested"); void refetchApp() },
-    onError: () => toast.error("Failed to stop"),
-  })
+  const { mutate: restart, isPending: restarting } = useRestartApplication(uuid!)
+  const { mutate: start, isPending: starting } = useStartApplication(uuid!)
+  const { mutate: stop, isPending: stopping } = useStopApplication(uuid!)
 
   const actionPending = restarting || starting || stopping
 
@@ -114,77 +52,83 @@ export default function ApplicationDetail() {
         <PullToRefresh onRefresh={handleRefresh} className="flex-1 min-h-0">
           <div className="p-4 space-y-5 pb-(--safe-area-bottom)">
 
-            {/* Status */}
-            <div className="flex items-center gap-2.5 py-2">
-              {appPending ? (
-                <>
-                  <Skeleton className="size-3 rounded-full" />
-                  <Skeleton className="h-4 w-24" />
-                </>
-              ) : (
-                <>
-                  <div className={cn("size-3 rounded-full shrink-0", statusDotColor(status))} />
-                  <p className="text-sm font-semibold">{statusLabel(status)}</p>
-                  {app?.build_pack && (
-                    <Badge variant="outline" className="text-[11px] capitalize ml-auto">{app.build_pack}</Badge>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Actions */}
-            {!isTransitioning && !appPending && (
-              <div className="flex gap-3">
-                {(isRunning || isError) && (
-                  <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => restart()}>
-                    {restarting ? <Loader2 className="size-5 animate-spin" /> : <RotateCw className="size-5" />}
-                    Restart
-                  </Button>
-                )}
-                {(isStopped || isError) && (
-                  <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => start()}>
-                    {starting ? <Loader2 className="size-5 animate-spin" /> : <Play className="size-5" />}
-                    Deploy
-                  </Button>
-                )}
-                {isRunning && (
-                  <Button variant="outline" className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => stop()}>
-                    {stopping ? <Loader2 className="size-5 animate-spin" /> : <Square className="size-5" />}
-                    Stop
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {/* Info */}
-            {appPending ? (
-              <InfoSkeleton />
+            {appError ? (
+              <ErrorCard onRetry={() => void refetchApp()} />
             ) : (
-              <Card className="py-0">
-                <CardContent className="p-0 divide-y divide-border">
-                  {app?.fqdn && (
-                    <InfoRow
-                      icon={Globe}
-                      label="Domain"
-                      value={firstDomain(app.fqdn)}
-                      href={app.fqdn.split(",")[0].trim()}
-                    />
+              <>
+                {/* Status */}
+                <div className="flex items-center gap-2.5 py-2">
+                  {appPending ? (
+                    <>
+                      <Skeleton className="size-3 rounded-full" />
+                      <Skeleton className="h-4 w-24" />
+                    </>
+                  ) : (
+                    <>
+                      <div className={cn("size-3 rounded-full shrink-0", statusDotColor(status))} />
+                      <p className="text-sm font-semibold">{statusLabel(status)}</p>
+                      {app?.build_pack && (
+                        <Badge variant="outline" className="text-[11px] capitalize ml-auto">{app.build_pack}</Badge>
+                      )}
+                    </>
                   )}
-                  {app?.git_repository && (
-                    <InfoRow
-                      icon={GitBranch}
-                      label="Repository"
-                      value={`${app.git_repository}${app.git_branch ? ` · ${app.git_branch}` : ""}`}
-                    />
-                  )}
-                  {app?.description && (
-                    <div className="px-4 py-3">
-                      <p className="text-xs text-muted-foreground mb-0.5">Description</p>
-                      <p className="text-sm">{app.description}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                </div>
+
+                {/* Actions */}
+                {!isTransitioning && !appPending && (
+                  <div className="flex gap-3">
+                    {(isRunning || isError) && (
+                      <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => restart()}>
+                        {restarting ? <Loader2 className="size-5 animate-spin" /> : <RotateCw className="size-5" />}
+                        Restart
+                      </Button>
+                    )}
+                    {(isStopped || isError) && (
+                      <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => start()}>
+                        {starting ? <Loader2 className="size-5 animate-spin" /> : <Play className="size-5" />}
+                        Deploy
+                      </Button>
+                    )}
+                    {isRunning && (
+                      <Button variant="outline" className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => stop()}>
+                        {stopping ? <Loader2 className="size-5 animate-spin" /> : <Square className="size-5" />}
+                        Stop
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Info */}
+                {appPending ? (
+                  <InfoSkeleton />
+                ) : (
+                  <Card className="py-0">
+                    <CardContent className="p-0 divide-y divide-border">
+                      {app?.fqdn && (
+                        <InfoRow
+                          icon={Globe}
+                          label="Domain"
+                          value={firstDomain(app.fqdn)}
+                          href={(app.fqdn.split(",")[0] ?? "").trim()}
+                        />
+                      )}
+                      {app?.git_repository && (
+                        <InfoRow
+                          icon={GitBranch}
+                          label="Repository"
+                          value={`${app.git_repository}${app.git_branch ? ` · ${app.git_branch}` : ""}`}
+                        />
+                      )}
+                      {app?.description && (
+                        <div className="px-4 py-3">
+                          <p className="text-xs text-muted-foreground mb-0.5">Description</p>
+                          <p className="text-sm">{app.description}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
 
             {/* Deployment history */}
@@ -192,7 +136,9 @@ export default function ApplicationDetail() {
               <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
                 Recent Deployments
               </h2>
-              {deploymentsPending ? (
+              {deploymentsError ? (
+                <ErrorCard onRetry={() => void refetchDeployments()} />
+              ) : deploymentsPending ? (
                 <DeploymentsSkeleton />
               ) : deployments.length > 0 ? (
                 deployments.map((d) => (

@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react"
 import { useNavigate } from "react-router"
 import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
-import { $api } from "@/lib/api"
+import { useServices } from "@/lib/api/services"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
@@ -9,16 +9,10 @@ import { ChevronRight } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
+import { statusDotColor } from "@/lib/status-utils"
+import { ErrorCard } from "@/components/error-card"
 
 type ServiceSchema = components["schemas"]["Service"] & { status?: string }
-
-function statusDotColor(status: string | undefined) {
-  const s = ((status ?? "").split(":")[0] ?? "").toLowerCase()
-  if (s.startsWith("running")) return "bg-success"
-  if (s.includes("exited") || s.includes("error") || s.includes("unhealthy")) return "bg-destructive"
-  if (s.includes("starting") || s.includes("restarting")) return "bg-warning"
-  return "bg-muted-foreground"
-}
 
 export default function Services() {
   const pageRef = useRef<HTMLElement>(null)
@@ -27,16 +21,18 @@ export default function Services() {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: servicesRaw, isPending, refetch } = $api.useQuery("get", "/services")
+  const { data: servicesRaw, isPending, isError, refetch } = useServices()
   const services = servicesRaw as ServiceSchema[] | undefined
 
   return (
     <cap-page ref={pageRef}>
       <div className="flex flex-col h-full">
         <Header title="Services" />
-        <PullToRefresh onRefresh={async () => { await refetch() }} className="flex-1 min-h-0">
+        <PullToRefresh onRefresh={refetch} className="flex-1 min-h-0">
           <div className="p-4 space-y-3 pb-(--safe-area-bottom)">
-            {isPending ? (
+            {isError ? (
+              <ErrorCard onRetry={() => void refetch()} />
+            ) : isPending ? (
               <ServicesSkeleton />
             ) : services && services.length > 0 ? (
               services.map((s) => <ServiceCard key={s.uuid} service={s} />)

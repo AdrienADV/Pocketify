@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react"
 import { useNavigate } from "react-router"
 import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
-import { $api } from "@/lib/api"
+import { useApplications } from "@/lib/api/applications"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
@@ -9,20 +9,10 @@ import { ChevronRight } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
+import { statusDotColor, firstDomain } from "@/lib/status-utils"
+import { ErrorCard } from "@/components/error-card"
 
 type ApplicationSchema = components["schemas"]["Application"]
-
-function statusDotColor(status: string) {
-  const s = status.toLowerCase()
-  if (s.startsWith("running")) return "bg-success"
-  if (s.includes("error") || s.includes("unhealthy") || s.includes("exited")) return "bg-destructive"
-  if (s.includes("starting") || s.includes("restarting")) return "bg-warning"
-  return "bg-muted-foreground"
-}
-
-function firstDomain(fqdn: string) {
-  return fqdn.split(",")[0].trim().replace(/^https?:\/\//, "")
-}
 
 export default function Applications() {
   const pageRef = useRef<HTMLElement>(null)
@@ -31,7 +21,7 @@ export default function Applications() {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: apps, isPending, refetch } = $api.useQuery("get", "/applications")
+  const { data: apps, isPending, isError, refetch } = useApplications()
 
   return (
     <cap-page ref={pageRef}>
@@ -39,7 +29,9 @@ export default function Applications() {
         <Header title="Applications" />
         <PullToRefresh onRefresh={refetch} className="flex-1 min-h-0">
           <div className="p-4 space-y-3 pb-(--safe-area-bottom)">
-            {isPending ? (
+            {isError ? (
+              <ErrorCard onRetry={() => void refetch()} />
+            ) : isPending ? (
               <AppsSkeleton />
             ) : apps && apps.length > 0 ? (
               apps.map((app) => (
@@ -61,7 +53,6 @@ export default function Applications() {
 
 function AppCard({ app }: Readonly<{ app: ApplicationSchema }>) {
   const navigate = useNavigate()
-  const status = app.status?.toLowerCase() ?? ""
 
   const goToDetail = () => {
     if (!app.uuid) return
@@ -73,7 +64,7 @@ function AppCard({ app }: Readonly<{ app: ApplicationSchema }>) {
     <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={goToDetail}>
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
-          <div className={cn("size-2 rounded-full shrink-0", statusDotColor(status))} />
+          <div className={cn("size-2 rounded-full shrink-0", statusDotColor(app.status))} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <p className="font-medium text-sm leading-tight truncate flex-1">

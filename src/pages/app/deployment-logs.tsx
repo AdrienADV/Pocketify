@@ -1,16 +1,14 @@
 import { useRef, useEffect } from "react"
 import { useParams } from "react-router"
 import { setupPage } from "@capgo/capacitor-transitions/react"
-import { useMutation } from "@tanstack/react-query"
-import { $api } from "@/lib/api"
-import { fetchClient } from "@/lib/api/client"
+import { useDeployment, useCancelDeployment } from "@/lib/api/deployments"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { X, Loader2 } from "lucide-react"
 import Header from "@/components/header"
-import { toast } from "sonner"
+import { timeAgo } from "@/lib/status-utils"
 
 const ACTIVE_STATUSES = ["queued", "in_progress"]
 const TERMINAL_STATUSES = ["finished", "error", "failed", "killed", "cancelled", "closed"]
@@ -47,16 +45,6 @@ function statusBadge(status: string) {
   return <Badge variant="outline" className="text-[11px] capitalize">{status}</Badge>
 }
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1) return "just now"
-  if (m < 60) return `${m}m ago`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  return `${Math.floor(h / 24)}d ago`
-}
-
 export default function DeploymentLogs() {
   const pageRef = useRef<HTMLElement>(null)
   const logsRef = useRef<HTMLPreElement>(null)
@@ -66,17 +54,13 @@ export default function DeploymentLogs() {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: deployment, isPending } = $api.useQuery(
-    "get", "/deployments/{uuid}",
-    { params: { path: { uuid: uuid! } } },
-    {
-      refetchInterval: (query) => {
-        const status = query.state.data?.status ?? ""
-        if (TERMINAL_STATUSES.includes(status)) return false
-        return 2000
-      },
+  const { data: deployment, isPending, isError, refetch } = useDeployment(uuid, {
+    refetchInterval: (query: { state: { data?: { status?: string } } }) => {
+      const status = query.state.data?.status ?? ""
+      if (TERMINAL_STATUSES.includes(status)) return false
+      return 2000
     },
-  )
+  })
 
   const isActive = ACTIVE_STATUSES.includes(deployment?.status ?? "")
   const logs = deployment?.logs ? parseLogs(deployment.logs) : null
@@ -87,14 +71,7 @@ export default function DeploymentLogs() {
     }
   }, [logs, isActive])
 
-  const { mutate: cancel, isPending: cancelling } = useMutation({
-    mutationFn: () =>
-      fetchClient.POST("/deployments/{uuid}/cancel", {
-        params: { path: { uuid: uuid! } },
-      }),
-    onSuccess: () => toast.success("Deployment cancelled"),
-    onError: () => toast.error("Failed to cancel"),
-  })
+  const { mutate: cancel, isPending: cancelling } = useCancelDeployment(uuid!)
 
   return (
     <cap-page ref={pageRef}>
@@ -123,6 +100,11 @@ export default function DeploymentLogs() {
             <div className="space-y-2">
               <Skeleton className="h-4 w-40" />
               <Skeleton className="h-3 w-28" />
+            </div>
+          ) : isError ? (
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-destructive flex-1">Failed to load deployment</p>
+              <Button variant="ghost" size="sm" onClick={() => void refetch()}>Retry</Button>
             </div>
           ) : (
             <>
@@ -153,14 +135,16 @@ export default function DeploymentLogs() {
           ref={logsRef}
           className={cn(
             "flex-1 overflow-y-auto p-4 text-[11px] leading-relaxed font-mono",
-            "bg-black text-green-400 whitespace-pre-wrap break-words",
+            "bg-black text-green-400 whitespace-pre-wrap wrap-break-word",
           )}
         >
           {isPending
             ? <span className="text-muted-foreground">Loading…</span>
-            : logs
-              ? logs
-              : <span className="text-muted-foreground">No logs available yet…</span>
+            : isError
+              ? <span className="text-destructive">Failed to load logs</span>
+              : logs
+                ? logs
+                : <span className="text-muted-foreground">No logs available yet…</span>
           }
           {isActive && (
             <span className="inline-block w-2 h-3 bg-green-400 animate-pulse ml-0.5 align-middle" />

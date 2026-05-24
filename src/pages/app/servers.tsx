@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react"
 import { useNavigate } from "react-router"
 import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
-import { $api } from "@/lib/api"
+import { useServers } from "@/lib/api/servers"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -10,6 +10,7 @@ import { ChevronRight } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
+import { ErrorCard } from "@/components/error-card"
 
 type ServerSchema = components["schemas"]["Server"]
 
@@ -26,7 +27,7 @@ export default function Servers() {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: servers, isPending, refetch } = $api.useQuery("get", "/servers")
+  const { data: servers, isPending, isError, refetch } = useServers()
 
   return (
     <cap-page ref={pageRef}>
@@ -34,7 +35,9 @@ export default function Servers() {
         <Header title="Servers" />
         <PullToRefresh onRefresh={refetch} className="flex-1 min-h-0">
           <div className="p-4 space-y-3 pb-(--safe-area-bottom)">
-            {isPending ? (
+            {isError ? (
+              <ErrorCard onRetry={() => void refetch()} />
+            ) : isPending ? (
               <ServersSkeleton />
             ) : servers && servers.length > 0 ? (
               servers.map((s) => <ServerCard key={s.uuid} server={s} />)

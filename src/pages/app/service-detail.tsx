@@ -1,9 +1,7 @@
 import { useRef, useEffect } from "react"
 import { useParams } from "react-router"
 import { setupPage } from "@capgo/capacitor-transitions/react"
-import { useMutation } from "@tanstack/react-query"
-import { $api } from "@/lib/api"
-import { fetchClient } from "@/lib/api/client"
+import { useService, useRestartService, useStartService, useStopService } from "@/lib/api/services"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -12,29 +10,9 @@ import { Play, RotateCw, Square, Loader2 } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
-import { toast } from "sonner"
+import { statusDotColor, statusLabel } from "@/lib/status-utils"
 
 type ServiceSchema = components["schemas"]["Service"] & { status?: string }
-function parseStatus(status: string | undefined) {
-  return (status ?? "").split(":")[0].toLowerCase()
-}
-
-function statusDotColor(status: string) {
-  if (status.startsWith("running")) return "bg-success"
-  if (status.includes("exited") || status.includes("error") || status.includes("unhealthy")) return "bg-destructive"
-  if (status.includes("starting") || status.includes("restarting")) return "bg-warning"
-  return "bg-muted-foreground"
-}
-
-function statusLabel(status: string) {
-  if (status.startsWith("running")) return "Running"
-  if (status.includes("exited")) return "Stopped"
-  if (status.includes("starting")) return "Starting"
-  if (status.includes("restarting")) return "Restarting"
-  if (status.includes("error")) return "Error"
-  if (status.includes("unhealthy")) return "Unhealthy"
-  return status || "Unknown"
-}
 
 export default function ServiceDetail() {
   const pageRef = useRef<HTMLElement>(null)
@@ -44,37 +22,19 @@ export default function ServiceDetail() {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: serviceRaw, isPending: servicePending, refetch: refetchService } = $api.useQuery(
-    "get", "/services/{uuid}",
-    { params: { path: { uuid: uuid! } } },
-  )
-  const service = serviceRaw as ServiceSchema | undefined
+  const { data: service, isPending: servicePending, refetch: refetchService } = useService(uuid)
 
-  const handleRefresh = () => Promise.all([refetchService()])
+  const handleRefresh = refetchService
 
-  const status = parseStatus(service?.status)
+  const status = ((service as ServiceSchema | undefined)?.status ?? "").split(":")[0].toLowerCase()
   const isRunning = status.startsWith("running")
   const isStopped = !status || status === "stopped" || status.includes("exited")
   const isTransitioning = status.includes("starting") || status.includes("restarting")
   const isError = status.includes("error") || status.includes("unhealthy")
 
-  const { mutate: restart, isPending: restarting } = useMutation({
-    mutationFn: () => fetchClient.GET("/services/{uuid}/restart", { params: { path: { uuid: uuid! } } }),
-    onSuccess: () => { toast.success("Restart queued"); void refetchService() },
-    onError: () => toast.error("Failed to restart"),
-  })
-
-  const { mutate: start, isPending: starting } = useMutation({
-    mutationFn: () => fetchClient.GET("/services/{uuid}/start", { params: { path: { uuid: uuid! } } }),
-    onSuccess: () => { toast.success("Start requested"); void refetchService() },
-    onError: () => toast.error("Failed to start"),
-  })
-
-  const { mutate: stop, isPending: stopping } = useMutation({
-    mutationFn: () => fetchClient.GET("/services/{uuid}/stop", { params: { path: { uuid: uuid! } } }),
-    onSuccess: () => { toast.success("Stop requested"); void refetchService() },
-    onError: () => toast.error("Failed to stop"),
-  })
+  const { mutate: restart, isPending: restarting } = useRestartService(uuid!)
+  const { mutate: start, isPending: starting } = useStartService(uuid!)
+  const { mutate: stop, isPending: stopping } = useStopService(uuid!)
 
   const actionPending = restarting || starting || stopping
 

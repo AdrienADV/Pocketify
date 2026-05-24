@@ -10,7 +10,7 @@ type PullToRefreshLabels = {
 };
 
 type PullToRefreshProps = {
-    onRefresh: () => Promise<void> | void;
+    onRefresh: () => unknown;
     children: React.ReactNode;
     className?: string;
     contentClassName?: string;
