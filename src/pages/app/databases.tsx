@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from "react"
 import { setupPage } from "@capgo/capacitor-transitions/react"
-import { useServices, useStartService, useStopService, useRestartService } from "@/lib/api/services"
+import {
+  useDatabases,
+  useStartDatabase,
+  useStopDatabase,
+  useRestartDatabase,
+  dbTypeLabel,
+  type Database,
+} from "@/lib/api/databases"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -13,58 +20,54 @@ import {
 } from "@/components/ui/drawer"
 import { cn } from "@/lib/utils"
 import { Play, RotateCw, Square, Loader2 } from "lucide-react"
-import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
 import { statusDotColor, statusLabel } from "@/lib/status-utils"
 import { ErrorCard } from "@/components/error-card"
 
-type ServiceSchema = components["schemas"]["Service"] & { status?: string }
-
 type ContentProps = {
-  services: ServiceSchema[] | undefined
+  databases: Database[] | undefined
   isPending: boolean
   isError: boolean
   refetch: () => void
-  setSelected: (s: ServiceSchema) => void
+  setSelected: (db: Database) => void
 }
 
-function renderContent({ services, isPending, isError, refetch, setSelected }: ContentProps) {
+function renderContent({ databases, isPending, isError, refetch, setSelected }: ContentProps) {
   if (isError) return <ErrorCard onRetry={refetch} />
-  if (isPending) return <ServicesSkeleton />
-  if (services && services.length > 0) {
-    return services.map((s) => (
-      <ServiceCard key={s.uuid} service={s} onTap={() => setSelected(s)} />
+  if (isPending) return <DatabasesSkeleton />
+  if (databases && databases.length > 0) {
+    return databases.map((db) => (
+      <DatabaseCard key={db.uuid} db={db} onTap={() => setSelected(db)} />
     ))
   }
   return (
     <Card>
       <CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">No services found</p>
+        <p className="text-sm text-muted-foreground">No databases found</p>
       </CardContent>
     </Card>
   )
 }
 
-export default function Services() {
+export default function Databases() {
   const pageRef = useRef<HTMLElement>(null)
-  const [selected, setSelected] = useState<ServiceSchema | null>(null)
+  const [selected, setSelected] = useState<Database | null>(null)
 
   useEffect(() => {
     if (pageRef.current) return setupPage(pageRef.current)
   }, [])
 
-  const { data: servicesRaw, isPending, isError, refetch } = useServices()
-  const services = servicesRaw as ServiceSchema[] | undefined
+  const { data: databases, isPending, isError, refetch } = useDatabases()
 
   return (
     <>
       <cap-page ref={pageRef}>
         <div className="flex flex-col h-full">
-          <Header title="Services" />
+          <Header title="Databases" />
           <PullToRefresh onRefresh={refetch} className="flex-1 min-h-0">
             <div className="p-4 space-y-3 pb-(--safe-area-bottom)">
-              {renderContent({ services, isPending, isError, refetch, setSelected })}
+              {renderContent({ databases, isPending, isError, refetch, setSelected })}
             </div>
           </PullToRefresh>
         </div>
@@ -73,15 +76,14 @@ export default function Services() {
       <Drawer open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null) }}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>{selected?.name ?? "Service"}</DrawerTitle>
+            <DrawerTitle>{selected?.name ?? "Database"}</DrawerTitle>
             <DrawerDescription>
               <span className={cn("inline-block size-2 rounded-full mr-1.5 align-middle", statusDotColor(selected?.status))} />
-              {statusLabel(selected?.status)}
-              {selected?.service_type && ` · ${selected.service_type}`}
+              {statusLabel(selected?.status)} · {selected ? dbTypeLabel(selected) : ""}
             </DrawerDescription>
           </DrawerHeader>
           {selected?.uuid && (
-            <ServiceActions
+            <DatabaseActions
               key={selected.uuid}
               uuid={selected.uuid}
               status={selected.status}
@@ -93,18 +95,16 @@ export default function Services() {
   )
 }
 
-function ServiceCard({ service, onTap }: Readonly<{ service: ServiceSchema; onTap: () => void }>) {
-  const rawStatus = ((service.status ?? "").split(":")[0] ?? "").toLowerCase()
+function DatabaseCard({ db, onTap }: Readonly<{ db: Database; onTap: () => void }>) {
+  const rawStatus = ((db.status ?? "").split(":")[0] ?? "").toLowerCase()
 
   return (
     <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={onTap}>
       <CardContent className="p-4 flex items-center gap-3">
-        <div className={cn("size-2 rounded-full shrink-0", statusDotColor(service.status))} />
+        <div className={cn("size-2 rounded-full shrink-0", statusDotColor(db.status))} />
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm leading-tight truncate">{service.name ?? "Unnamed"}</p>
-          {service.service_type && (
-            <p className="text-xs text-muted-foreground truncate">{service.service_type}</p>
-          )}
+          <p className="font-medium text-sm leading-tight truncate">{db.name ?? "Unnamed"}</p>
+          <p className="text-xs text-muted-foreground truncate">{dbTypeLabel(db)}</p>
         </div>
         {rawStatus && (
           <p className="text-xs text-muted-foreground capitalize shrink-0">{rawStatus}</p>
@@ -114,10 +114,10 @@ function ServiceCard({ service, onTap }: Readonly<{ service: ServiceSchema; onTa
   )
 }
 
-function ServiceActions({ uuid, status }: Readonly<{ uuid: string; status?: string }>) {
-  const { mutate: start, isPending: starting } = useStartService(uuid)
-  const { mutate: stop, isPending: stopping } = useStopService(uuid)
-  const { mutate: restart, isPending: restarting } = useRestartService(uuid)
+function DatabaseActions({ uuid, status }: Readonly<{ uuid: string; status?: string }>) {
+  const { mutate: start, isPending: starting } = useStartDatabase(uuid)
+  const { mutate: stop, isPending: stopping } = useStopDatabase(uuid)
+  const { mutate: restart, isPending: restarting } = useRestartDatabase(uuid)
 
   const s = ((status ?? "").split(":")[0] ?? "").toLowerCase()
   const isRunning = s.startsWith("running")
@@ -159,7 +159,7 @@ function ServiceActions({ uuid, status }: Readonly<{ uuid: string; status?: stri
   )
 }
 
-function ServicesSkeleton() {
+function DatabasesSkeleton() {
   return (
     <>
       {[0, 1, 2].map((i) => (

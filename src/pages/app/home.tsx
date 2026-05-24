@@ -4,12 +4,13 @@ import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
 import { useApplications } from "@/lib/api/applications"
 import { useServers } from "@/lib/api/servers"
 import { useServices } from "@/lib/api/services"
+import { useDatabases } from "@/lib/api/databases"
 import { useDeployments } from "@/lib/api/deployments"
 import { useCurrentTeam } from "@/lib/api/teams"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Server, AppWindow, Package, ChevronRight, Loader2 } from "lucide-react"
+import { Server, AppWindow, Package, Database as DatabaseIcon, ChevronRight, Loader2 } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
@@ -29,12 +30,13 @@ export default function Home() {
   const { data: servers, isPending: serversPending, isError: serversError, refetch: refetchServers } = useServers()
   const { data: apps, isPending: appsPending, isError: appsError, refetch: refetchApps } = useApplications()
   const { data: servicesRaw, isPending: servicesPending, isError: servicesError, refetch: refetchServices } = useServices()
+  const { data: databases, isPending: dbsPending, isError: dbsError, refetch: refetchDbs } = useDatabases()
   const { data: deployments, isPending: deploymentsPending, isError: deploymentsError, refetch: refetchDeployments } = useDeployments()
 
   const hasActiveDeployments = deployments && deployments.length > 0
 
   const handleRefresh = () =>
-    Promise.all([refetchTeam(), refetchServers(), refetchApps(), refetchServices(), refetchDeployments()])
+    Promise.all([refetchTeam(), refetchServers(), refetchApps(), refetchServices(), refetchDbs(), refetchDeployments()])
 
   const go = (path: string) => {
     setDirection("forward")
@@ -98,6 +100,17 @@ export default function Home() {
                 isError={servicesError}
                 total={(servicesRaw as unknown[])?.length ?? 0}
                 onClick={() => go("/services")}
+              />
+
+              <ResourceCard
+                icon={DatabaseIcon}
+                label="Databases"
+                isPending={dbsPending}
+                isError={dbsError}
+                total={databases?.length ?? 0}
+                activeCount={databases?.filter((d) => d.status?.toLowerCase().startsWith("running")).length ?? 0}
+                activeLabel="running"
+                onClick={() => go("/databases")}
               />
 
               <ResourceCard
