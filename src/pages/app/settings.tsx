@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
 import { useQueryClient } from "@tanstack/react-query"
+import { useInstanceHealth, useInstanceVersion } from "@/lib/api/instance"
 import { useCurrentTeam } from "@/lib/api/teams"
 import { clearCredentials, getApiUrl, getToken, saveCredentials, validateCredentials } from "@/lib/auth"
 import { Card, CardContent } from "@/components/ui/card"
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/drawer"
 import { Clipboard } from "@capacitor/clipboard"
 import { cn } from "@/lib/utils"
-import { LogOut, Server, User, Key, Loader2, ClipboardPaste, CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react"
+import { LogOut, Server, User, Key, Loader2, ClipboardPaste, CheckCircle2, XCircle, Eye, EyeOff, Activity, BadgeInfo } from "lucide-react"
 import Header from "@/components/header"
 import { toast } from "sonner"
 
@@ -41,7 +42,25 @@ export default function Settings() {
   }, [])
 
   const { data: team } = useCurrentTeam()
+  const {
+    data: version,
+    isPending: versionPending,
+    isError: versionError,
+  } = useInstanceVersion()
+  const {
+    data: health,
+    isPending: healthPending,
+    isError: healthError,
+  } = useInstanceHealth()
   const apiUrl = getApiUrl().replace("/api/v1", "")
+  const isHealthy = health?.toUpperCase() === "OK"
+  const apiStatus = healthPending
+    ? "Checking"
+    : healthError
+      ? "Unavailable"
+      : isHealthy
+        ? "Online"
+        : "Unknown"
   const currentToken = getToken() ?? ""
   const maskedToken = currentToken.length > 8
     ? `${currentToken.slice(0, 4)}${"•".repeat(8)}${currentToken.slice(-4)}`
@@ -130,14 +149,6 @@ export default function Settings() {
                       </div>
                     </div>
                     <Separator />
-                    <div className="flex items-center gap-3 px-4 py-3">
-                      <Server className="size-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-muted-foreground">Instance</p>
-                        <p className="text-sm font-medium truncate">{apiUrl}</p>
-                      </div>
-                    </div>
-                    <Separator />
                     <button
                       className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-muted/50"
                       onClick={() => setEditingToken(true)}
@@ -149,6 +160,47 @@ export default function Settings() {
                       </div>
                       <span className="text-xs text-primary shrink-0">Edit</span>
                     </button>
+                  </CardContent>
+                </Card>
+              </section>
+
+              <section className="space-y-2">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                  Instance
+                </h2>
+                <Card className="py-0">
+                  <CardContent className="p-0">
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <Server className="size-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">URL</p>
+                        <p className="text-sm font-medium truncate">{apiUrl}</p>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <Activity className="size-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">API Status</p>
+                        <p className={cn(
+                          "text-sm font-medium truncate",
+                          healthError && "text-destructive",
+                          isHealthy && "text-green-600 dark:text-green-500",
+                        )}>
+                          {apiStatus}
+                        </p>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <BadgeInfo className="size-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Version</p>
+                        <p className={cn("text-sm font-medium truncate", versionError && "text-destructive")}>
+                          {versionPending ? "Checking" : versionError ? "Unavailable" : version}
+                        </p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </section>
