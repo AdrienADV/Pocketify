@@ -17,11 +17,12 @@ import {
   DrawerFooter,
 } from "@/components/ui/drawer"
 import { Clipboard } from "@capacitor/clipboard"
-import { LogOut, Server, User, Key, Loader2, ClipboardPaste, CheckCircle2, XCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { LogOut, Server, User, Key, Loader2, ClipboardPaste, CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react"
 import Header from "@/components/header"
 import { toast } from "sonner"
 
-type VerifyState = "idle" | "verifying" | "valid" | "invalid"
+type TokenStatus = "idle" | "checking" | "valid" | "invalid"
 
 export default function Settings() {
   const pageRef = useRef<HTMLElement>(null)
@@ -30,8 +31,10 @@ export default function Settings() {
 
   const [editingToken, setEditingToken] = useState(false)
   const [token, setToken] = useState("")
+  const [showToken, setShowToken] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [verifyState, setVerifyState] = useState<VerifyState>("idle")
+  const [tokenStatus, setTokenStatus] = useState<TokenStatus>("idle")
+  const [tokenError, setTokenError] = useState("")
 
   useEffect(() => {
     if (pageRef.current) return setupPage(pageRef.current)
@@ -44,11 +47,37 @@ export default function Settings() {
     ? `${currentToken.slice(0, 4)}${"•".repeat(8)}${currentToken.slice(-4)}`
     : "•".repeat(currentToken.length)
 
+  // Auto-validation avec debounce
+  useEffect(() => {
+    if (!token.trim()) {
+      setTokenStatus("idle")
+      setTokenError("")
+      return
+    }
+
+    setTokenStatus("checking")
+    setTokenError("")
+
+    const timer = setTimeout(async () => {
+      try {
+        await validateCredentials(getApiUrl(), token.trim())
+        setTokenStatus("valid")
+      } catch (e) {
+        setTokenStatus("invalid")
+        setTokenError(e instanceof Error ? e.message : "Invalid token")
+      }
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [token])
+
   const handleClose = () => {
     if (saving) return
     setEditingToken(false)
     setToken("")
-    setVerifyState("idle")
+    setShowToken(false)
+    setTokenStatus("idle")
+    setTokenError("")
   }
 
   const handleLogout = () => {
@@ -61,28 +90,19 @@ export default function Settings() {
   const handlePaste = async () => {
     try {
       const { value } = await Clipboard.read()
-      console.log("[settings] pasted value:", value)
       setToken(value.trim())
-      setVerifyState("idle")
     } catch {
       toast.error("Nothing in clipboard")
     }
   }
 
-  const handleVerifyAndSave = async () => {
-    const trimmed = token.trim()
-    if (!trimmed) return
-    setVerifyState("verifying")
+  const handleSave = async () => {
+    setSaving(true)
     try {
-      await validateCredentials(getApiUrl(), trimmed)
-      setVerifyState("valid")
-      setSaving(true)
-      saveCredentials(getApiUrl(), trimmed)
+      saveCredentials(getApiUrl(), token.trim())
       queryClient.clear()
       toast.success("Token updated")
       setTimeout(handleClose, 600)
-    } catch {
-      setVerifyState("invalid")
     } finally {
       setSaving(false)
     }
@@ -150,43 +170,71 @@ export default function Settings() {
             <DrawerTitle>API Token</DrawerTitle>
             <DrawerDescription>Paste your Coolify API token to update it.</DrawerDescription>
           </DrawerHeader>
-          <DrawerFooter className="mt-0">
-            <Input
-              type="password"
-              placeholder="Tap Paste to fill"
-              value={token}
-              className="h-12 w-full text-base font-mono"
-            />
+          <DrawerFooter className="mt-0 space-y-3">
+            <div className="space-y-1.5">
+              <div className="relative">
+                <Input
+                  type={showToken ? "text" : "password"}
+                  placeholder="coo_..."
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  className={cn(
+                    "pr-10 font-mono",
+                    tokenStatus === "valid" && "border-green-500 focus-visible:border-green-500 focus-visible:ring-green-500/50",
+                    tokenStatus === "invalid" && "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50"
+                  )}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  autoComplete="new-password"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 size-8 text-muted-foreground"
+                  onClick={() => setShowToken(!showToken)}
+                >
+                  {showToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
+              </div>
 
-            {verifyState === "valid" && (
-              <div className="flex items-center gap-2 text-sm text-green-600 px-1">
-                <CheckCircle2 className="size-4 shrink-0" />
-                Token valid
-              </div>
-            )}
-            {verifyState === "invalid" && (
-              <div className="flex items-center gap-2 text-sm text-destructive px-1">
-                <XCircle className="size-4 shrink-0" />
-                Invalid token — check your key and instance URL
-              </div>
-            )}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => void handlePaste()}
+              >
+                <ClipboardPaste className="size-4" />
+                Paste
+              </Button>
+
+              {tokenStatus === "checking" && (
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Checking…
+                </p>
+              )}
+              {tokenStatus === "valid" && (
+                <p className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-500">
+                  <CheckCircle2 className="size-3.5" />
+                  Token valid
+                </p>
+              )}
+              {tokenStatus === "invalid" && (
+                <p className="flex items-center gap-1.5 text-sm text-destructive">
+                  <XCircle className="size-3.5" />
+                  {tokenError}
+                </p>
+              )}
+            </div>
 
             <Button
-              variant="outline"
-              className="h-12 text-base gap-2"
-              onClick={() => void handlePaste()}
+              className="w-full"
+              disabled={saving || tokenStatus !== "valid"}
+              onClick={() => void handleSave()}
             >
-              <ClipboardPaste className="size-4" />
-              Paste
-            </Button>
-
-            <Button
-              className="h-12 text-base"
-              disabled={!token.trim() || verifyState === "verifying" || verifyState === "valid"}
-              onClick={() => void handleVerifyAndSave()}
-            >
-              {verifyState === "verifying" && <Loader2 className="size-5 animate-spin" />}
-              {verifyState === "verifying" ? "Verifying…" : "Verify & Save"}
+              {saving && <Loader2 className="size-4 animate-spin" />}
+              {saving ? "Saving…" : "Save"}
             </Button>
           </DrawerFooter>
         </DrawerContent>

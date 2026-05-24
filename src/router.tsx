@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/protected-route"
 import GuestRoute from "./components/guest-route"
 import TabLayout from "./layouts/tab-layout"
 import Onboarding from "./pages/onboarding"
+import OnboardingToken from "./pages/onboarding/token"
 import Home from "./pages/app/home"
 import Settings from "./pages/app/settings"
 import Applications from "./pages/app/applications"
@@ -24,6 +25,7 @@ export default function Router({ location }: Readonly<RouterProps>) {
     <Routes location={location}>
       <Route element={<GuestRoute />}>
         <Route path="onboarding" element={<Onboarding />} />
+        <Route path="onboarding/token" element={<OnboardingToken />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>
