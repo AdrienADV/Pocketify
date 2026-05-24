@@ -20,6 +20,7 @@ type DeploymentSchema = components["schemas"]["ApplicationDeploymentQueue"]
 export default function ApplicationDetail() {
   const pageRef = useRef<HTMLElement>(null)
   const { uuid } = useParams<{ uuid: string }>()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (pageRef.current) return setupPage(pageRef.current)
@@ -44,6 +45,12 @@ export default function ApplicationDetail() {
   const { mutate: stop, isPending: stopping } = useStopApplication(uuid!)
 
   const actionPending = restarting || starting || stopping
+
+  const goToDeployment = (deploymentUuid?: string) => {
+    if (!deploymentUuid) return
+    setDirection("forward")
+    navigate(`/deployments/${deploymentUuid}`)
+  }
 
   return (
     <cap-page ref={pageRef}>
@@ -78,13 +85,13 @@ export default function ApplicationDetail() {
                 {!isTransitioning && !appPending && (
                   <div className="flex gap-3">
                     {(isRunning || isError) && (
-                      <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => restart()}>
+                      <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => restart(undefined, { onSuccess: (r) => goToDeployment(r.data?.deployment_uuid) })}>
                         {restarting ? <Loader2 className="size-5 animate-spin" /> : <RotateCw className="size-5" />}
                         Restart
                       </Button>
                     )}
                     {(isStopped || isError) && (
-                      <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => start()}>
+                      <Button className="flex-1 gap-2 h-12 text-base" disabled={actionPending} onClick={() => start(undefined, { onSuccess: (r) => goToDeployment(r.data?.deployment_uuid) })}>
                         {starting ? <Loader2 className="size-5 animate-spin" /> : <Play className="size-5" />}
                         Deploy
                       </Button>
