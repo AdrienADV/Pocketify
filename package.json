@@ -26,6 +26,7 @@
     "@capacitor/push-notifications": "^8.0.1",
     "@capacitor/share": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.1",
+    "@capgo/capacitor-in-app-review": "^8.1.5",
     "@capgo/capacitor-native-navigation": "^8.0.20",
     "@capgo/capacitor-transitions": "^8.1.5",
     "@capgo/capacitor-updater": "^8.47.3",

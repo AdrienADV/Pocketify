@@ -17,6 +17,7 @@
         "@capacitor/push-notifications": "^8.0.1",
         "@capacitor/share": "^8.0.1",
         "@capacitor/splash-screen": "^8.0.1",
+        "@capgo/capacitor-in-app-review": "^8.1.5",
         "@capgo/capacitor-native-navigation": "^8.0.20",
         "@capgo/capacitor-transitions": "^8.1.5",
         "@capgo/capacitor-updater": "^8.47.3",
@@ -144,6 +145,8 @@
     "@capacitor/share": ["@capacitor/share@8.0.1", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-3cSBKBCJVon54rKDROP2rqGyeGks4pBh9TbaEk9S375Kbek/ZHe72N50zIa0Vn9Eac/SuhwgehO/mmA4CsUOiw=="],
 
     "@capacitor/splash-screen": ["@capacitor/splash-screen@8.0.1", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-c/ew/Z3eA7z8l06WoRAtzVF16VwYYrExmHmfGq1Cg675pVzaC/yuucB8/1xG1vhEfnW4fZ1KhSf/kzR1RiVYgg=="],
+
+    "@capgo/capacitor-in-app-review": ["@capgo/capacitor-in-app-review@8.1.5", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-IHFDpmleT6C2wjSYU+MZhnn/wNY/c3yS3hig2vhbQYyaZJBaB1omghcACj7FDKPQ7wJQHebKrGmLBc32qrIB0Q=="],
 
     "@capgo/capacitor-native-navigation": ["@capgo/capacitor-native-navigation@8.0.21", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-pKJoHfn1eD1VP7sJe0qbmM6JKCNexWNxUTY+4tqkT4tUvwAozzE+IVS64M+7rL9bLWP2i5jreqKIVFwmT2n03A=="],
 
