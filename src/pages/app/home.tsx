@@ -15,6 +15,7 @@ import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
 import { ErrorCard } from "@/components/error-card"
+import { useActiveResourceOperations } from "@/lib/operation-tracker"
 
 type DeploymentSchema = components["schemas"]["ApplicationDeploymentQueue"]
 
@@ -32,6 +33,9 @@ export default function Home() {
   const { data: servicesRaw, isPending: servicesPending, isError: servicesError, refetch: refetchServices } = useServices()
   const { data: databases, isPending: dbsPending, isError: dbsError, refetch: refetchDbs } = useDatabases()
   const { data: deployments, isPending: deploymentsPending, isError: deploymentsError, refetch: refetchDeployments } = useDeployments()
+  const applicationOperations = useActiveResourceOperations("application")
+  const serviceOperations = useActiveResourceOperations("service")
+  const databaseOperations = useActiveResourceOperations("database")
 
   const hasActiveDeployments = deployments && deployments.length > 0
 
@@ -90,6 +94,7 @@ export default function Home() {
                 total={apps?.length ?? 0}
                 activeCount={apps?.filter((a) => a.status?.toLowerCase().startsWith("running")).length ?? 0}
                 activeLabel="running"
+                operationCount={applicationOperations.length}
                 onClick={() => go("/applications")}
               />
 
@@ -99,6 +104,7 @@ export default function Home() {
                 isPending={servicesPending}
                 isError={servicesError}
                 total={(servicesRaw as unknown[])?.length ?? 0}
+                operationCount={serviceOperations.length}
                 onClick={() => go("/services")}
               />
 
@@ -110,6 +116,7 @@ export default function Home() {
                 total={databases?.length ?? 0}
                 activeCount={databases?.filter((d) => d.status?.toLowerCase().startsWith("running")).length ?? 0}
                 activeLabel="running"
+                operationCount={databaseOperations.length}
                 onClick={() => go("/databases")}
               />
 
@@ -155,6 +162,7 @@ function ResourceCard({
   total,
   activeCount,
   activeLabel,
+  operationCount = 0,
   onClick,
 }: Readonly<{
   icon: React.ElementType
@@ -164,13 +172,17 @@ function ResourceCard({
   total: number
   activeCount?: number
   activeLabel?: string
+  operationCount?: number
   onClick: () => void
 }>) {
+  const countLabel = activeCount !== undefined
+    ? `${activeCount} ${activeLabel} · ${total} total`
+    : `${total} total`
   const sublabel = isPending
     ? null
-    : activeCount !== undefined
-      ? `${activeCount} ${activeLabel} · ${total} total`
-      : `${total} total`
+    : operationCount > 0
+      ? `${operationCount} updating · ${countLabel}`
+      : countLabel
 
   return (
     <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={onClick}>
@@ -179,7 +191,10 @@ function ResourceCard({
           <Icon className="size-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm">{label}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="font-semibold text-sm">{label}</p>
+            {operationCount > 0 && <Loader2 className="size-3 text-muted-foreground animate-spin" />}
+          </div>
           {isError
             ? <p className="text-xs text-destructive mt-0.5">Failed to load</p>
             : sublabel === null

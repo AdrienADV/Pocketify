@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query"
 import { $api, fetchClient } from "@/lib/api/client"
+import { useHasActiveResourceOperations, useResourceOperation } from "@/lib/operation-tracker"
 import { toast } from "sonner"
 
 export const deploymentKeys = {
@@ -10,8 +11,11 @@ export const deploymentKeys = {
 }
 
 export function useDeployments() {
+  const hasApplicationOperations = useHasActiveResourceOperations("application")
+
   return $api.useQuery("get", "/deployments", {}, {
     refetchInterval: (query) => {
+      if (hasApplicationOperations) return 3000
       const data = query.state.data
       if (!data || data.length === 0) return false
       return data.some((d) => d.status === "in_progress" || d.status === "queued") ? 3000 : false
@@ -20,10 +24,15 @@ export function useDeployments() {
 }
 
 export function useApplicationDeployments(uuid: string | undefined) {
+  const operation = useResourceOperation("application", uuid)
+
   return $api.useQuery(
     "get", "/deployments/applications/{uuid}",
     { params: { path: { uuid: uuid! }, query: { take: 10 } } },
-    { enabled: !!uuid },
+    {
+      enabled: !!uuid,
+      refetchInterval: operation ? 3000 : false,
+    },
   )
 }
 

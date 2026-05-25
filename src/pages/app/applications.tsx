@@ -9,6 +9,7 @@ import { ChevronRight } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
+import { useDisplayedResourceStatus } from "@/lib/operation-tracker"
 import { statusDotColor, firstDomain } from "@/lib/status-utils"
 import { ErrorCard } from "@/components/error-card"
 
@@ -53,6 +54,7 @@ export default function Applications() {
 
 function AppCard({ app }: Readonly<{ app: ApplicationSchema }>) {
   const navigate = useNavigate()
+  const status = useDisplayedResourceStatus("application", app.uuid, app.status)
 
   const goToDetail = () => {
     if (!app.uuid) return
@@ -64,7 +66,7 @@ function AppCard({ app }: Readonly<{ app: ApplicationSchema }>) {
     <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={goToDetail}>
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
-          <div className={cn("size-2 rounded-full shrink-0", statusDotColor(app.status))} />
+          <div className={cn("size-2 rounded-full shrink-0", statusDotColor(status))} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <p className="font-medium text-sm leading-tight truncate flex-1">

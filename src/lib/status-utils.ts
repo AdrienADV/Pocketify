@@ -6,7 +6,7 @@ export function statusDotColor(raw: string | undefined): string {
   const s = normalize(raw)
   if (s.startsWith("running")) return "bg-success"
   if (s.includes("exited") || s.includes("error") || s.includes("unhealthy")) return "bg-destructive"
-  if (s.includes("starting") || s.includes("restarting") || s.includes("degraded")) return "bg-warning"
+  if (s.includes("starting") || s.includes("stopping") || s.includes("restarting") || s.includes("degraded")) return "bg-warning"
   return "bg-muted-foreground"
 }
 
@@ -15,6 +15,7 @@ export function statusLabel(raw: string | undefined): string {
   if (s.startsWith("running")) return "Running"
   if (s.includes("exited")) return "Stopped"
   if (s.includes("starting")) return "Starting"
+  if (s.includes("stopping")) return "Stopping"
   if (s.includes("restarting")) return "Restarting"
   if (s.includes("error")) return "Error"
   if (s.includes("unhealthy")) return "Unhealthy"

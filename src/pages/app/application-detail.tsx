@@ -12,6 +12,7 @@ import { Play, RotateCw, Square, Loader2, GitBranch, Globe, ExternalLink, Chevro
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
+import { useDisplayedResourceStatus } from "@/lib/operation-tracker"
 import { statusDotColor, statusLabel, deploymentStatusColor, firstDomain, timeAgo } from "@/lib/status-utils"
 import { ErrorCard } from "@/components/error-card"
 
@@ -34,10 +35,11 @@ export default function ApplicationDetail() {
 
   const handleRefresh = () => Promise.all([refetchApp(), refetchDeployments()])
 
-  const status = app?.status?.toLowerCase() ?? ""
+  const displayedStatus = useDisplayedResourceStatus("application", uuid, app?.status)
+  const status = displayedStatus?.toLowerCase() ?? ""
   const isRunning = status.startsWith("running")
   const isStopped = !status || status === "stopped" || status.includes("exited")
-  const isTransitioning = status.includes("starting") || status.includes("restarting")
+  const isTransitioning = status.includes("starting") || status.includes("stopping") || status.includes("restarting")
   const isError = status.includes("error") || status.includes("unhealthy")
 
   const { mutate: restart, isPending: restarting } = useRestartApplication(uuid!)
@@ -74,6 +76,7 @@ export default function ApplicationDetail() {
                     <>
                       <div className={cn("size-3 rounded-full shrink-0", statusDotColor(status))} />
                       <p className="text-sm font-semibold">{statusLabel(status)}</p>
+                      {isTransitioning && <Loader2 className="size-3.5 text-muted-foreground animate-spin" />}
                       {app?.build_pack && (
                         <Badge variant="outline" className="text-[11px] capitalize ml-auto">{app.build_pack}</Badge>
                       )}

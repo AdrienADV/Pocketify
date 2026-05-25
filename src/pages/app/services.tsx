@@ -16,6 +16,7 @@ import { Play, RotateCw, Square, Loader2 } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
+import { useDisplayedResourceStatus } from "@/lib/operation-tracker"
 import { statusDotColor, statusLabel } from "@/lib/status-utils"
 import { ErrorCard } from "@/components/error-card"
 
@@ -56,6 +57,11 @@ export default function Services() {
 
   const { data: servicesRaw, isPending, isError, refetch } = useServices()
   const services = servicesRaw as ServiceSchema[] | undefined
+  const selectedFromList = selected?.uuid
+    ? services?.find((service) => service.uuid === selected.uuid)
+    : undefined
+  const displayedSelected = selectedFromList ?? selected
+  const selectedStatus = useDisplayedResourceStatus("service", displayedSelected?.uuid, displayedSelected?.status)
 
   return (
     <>
@@ -73,18 +79,18 @@ export default function Services() {
       <Drawer open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null) }}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>{selected?.name ?? "Service"}</DrawerTitle>
+            <DrawerTitle>{displayedSelected?.name ?? "Service"}</DrawerTitle>
             <DrawerDescription>
-              <span className={cn("inline-block size-2 rounded-full mr-1.5 align-middle", statusDotColor(selected?.status))} />
-              {statusLabel(selected?.status)}
-              {selected?.service_type && ` · ${selected.service_type}`}
+              <span className={cn("inline-block size-2 rounded-full mr-1.5 align-middle", statusDotColor(selectedStatus))} />
+              {statusLabel(selectedStatus)}
+              {displayedSelected?.service_type && ` · ${displayedSelected.service_type}`}
             </DrawerDescription>
           </DrawerHeader>
-          {selected?.uuid && (
+          {displayedSelected?.uuid && (
             <ServiceActions
-              key={selected.uuid}
-              uuid={selected.uuid}
-              status={selected.status}
+              key={displayedSelected.uuid}
+              uuid={displayedSelected.uuid}
+              status={selectedStatus}
             />
           )}
         </DrawerContent>
@@ -94,12 +100,13 @@ export default function Services() {
 }
 
 function ServiceCard({ service, onTap }: Readonly<{ service: ServiceSchema; onTap: () => void }>) {
-  const rawStatus = ((service.status ?? "").split(":")[0] ?? "").toLowerCase()
+  const status = useDisplayedResourceStatus("service", service.uuid, service.status)
+  const rawStatus = ((status ?? "").split(":")[0] ?? "").toLowerCase()
 
   return (
     <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={onTap}>
       <CardContent className="p-4 flex items-center gap-3">
-        <div className={cn("size-2 rounded-full shrink-0", statusDotColor(service.status))} />
+        <div className={cn("size-2 rounded-full shrink-0", statusDotColor(status))} />
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm leading-tight truncate">{service.name ?? "Unnamed"}</p>
           {service.service_type && (
@@ -122,7 +129,7 @@ function ServiceActions({ uuid, status }: Readonly<{ uuid: string; status?: stri
   const s = ((status ?? "").split(":")[0] ?? "").toLowerCase()
   const isRunning = s.startsWith("running")
   const isStopped = !s || s === "stopped" || s.includes("exited")
-  const isTransitioning = s.includes("starting") || s.includes("restarting")
+  const isTransitioning = s.includes("starting") || s.includes("stopping") || s.includes("restarting")
   const isErrored = s.includes("error") || s.includes("unhealthy")
   const actionPending = starting || stopping || restarting
 

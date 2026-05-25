@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils"
 import { Play, RotateCw, Square, Loader2 } from "lucide-react"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
+import { useDisplayedResourceStatus } from "@/lib/operation-tracker"
 import { statusDotColor, statusLabel } from "@/lib/status-utils"
 import { ErrorCard } from "@/components/error-card"
 
@@ -59,6 +60,11 @@ export default function Databases() {
   }, [])
 
   const { data: databases, isPending, isError, refetch } = useDatabases()
+  const selectedFromList = selected?.uuid
+    ? databases?.find((db) => db.uuid === selected.uuid)
+    : undefined
+  const displayedSelected = selectedFromList ?? selected
+  const selectedStatus = useDisplayedResourceStatus("database", displayedSelected?.uuid, displayedSelected?.status)
 
   return (
     <>
@@ -76,17 +82,17 @@ export default function Databases() {
       <Drawer open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null) }}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>{selected?.name ?? "Database"}</DrawerTitle>
+            <DrawerTitle>{displayedSelected?.name ?? "Database"}</DrawerTitle>
             <DrawerDescription>
-              <span className={cn("inline-block size-2 rounded-full mr-1.5 align-middle", statusDotColor(selected?.status))} />
-              {statusLabel(selected?.status)} · {selected ? dbTypeLabel(selected) : ""}
+              <span className={cn("inline-block size-2 rounded-full mr-1.5 align-middle", statusDotColor(selectedStatus))} />
+              {statusLabel(selectedStatus)} · {displayedSelected ? dbTypeLabel(displayedSelected) : ""}
             </DrawerDescription>
           </DrawerHeader>
-          {selected?.uuid && (
+          {displayedSelected?.uuid && (
             <DatabaseActions
-              key={selected.uuid}
-              uuid={selected.uuid}
-              status={selected.status}
+              key={displayedSelected.uuid}
+              uuid={displayedSelected.uuid}
+              status={selectedStatus}
             />
           )}
         </DrawerContent>
@@ -96,12 +102,13 @@ export default function Databases() {
 }
 
 function DatabaseCard({ db, onTap }: Readonly<{ db: Database; onTap: () => void }>) {
-  const rawStatus = ((db.status ?? "").split(":")[0] ?? "").toLowerCase()
+  const status = useDisplayedResourceStatus("database", db.uuid, db.status)
+  const rawStatus = ((status ?? "").split(":")[0] ?? "").toLowerCase()
 
   return (
     <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={onTap}>
       <CardContent className="p-4 flex items-center gap-3">
-        <div className={cn("size-2 rounded-full shrink-0", statusDotColor(db.status))} />
+        <div className={cn("size-2 rounded-full shrink-0", statusDotColor(status))} />
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm leading-tight truncate">{db.name ?? "Unnamed"}</p>
           <p className="text-xs text-muted-foreground truncate">{dbTypeLabel(db)}</p>
@@ -122,7 +129,7 @@ function DatabaseActions({ uuid, status }: Readonly<{ uuid: string; status?: str
   const s = ((status ?? "").split(":")[0] ?? "").toLowerCase()
   const isRunning = s.startsWith("running")
   const isStopped = !s || s === "stopped" || s.includes("exited")
-  const isTransitioning = s.includes("starting") || s.includes("restarting")
+  const isTransitioning = s.includes("starting") || s.includes("stopping") || s.includes("restarting")
   const isErrored = s.includes("error") || s.includes("unhealthy")
   const actionPending = starting || stopping || restarting
 
