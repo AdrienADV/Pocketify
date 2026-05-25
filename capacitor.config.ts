@@ -6,21 +6,27 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   plugins: {
     SystemBars: {
-      insetsHandling: "css",
-      style: "LIGHT",
+      insetsHandling: 'css',
+      style: 'LIGHT'
     },
     SplashScreen: {
       launchShowDuration: 2000,
-      launchAutoHide: true,
+      launchAutoHide: false,
       launchFadeOutDuration: 500,
-      backgroundColor: "#863BFF",
-      showSpinner: false,
+      backgroundColor: '#863BFF',
+      showSpinner: false
     },
     Keyboard: {
-      resize: "body",
+      resize: 'body',
       resizeOnFullScreen: true
+    },
+    CapacitorUpdater: {
+      version: '1.0.0',
+      appId: 'com.pocketify.app',
+      autoUpdate: 'always',
+      autoSplashscreen: true
     }
-  },
+  }
 };
 
 export default config;

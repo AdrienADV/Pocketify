@@ -1,6 +1,6 @@
-# Mobilify
+# Pocketify
 
-Mobilify is a starter boilerplate to ship mobile apps fast with **React + Capacitor + shadcn/ui**.
+Pocketify is a starter boilerplate to ship mobile apps fast with **React + Capacitor + shadcn/ui**.
 
 It includes:
 - React + Vite + TypeScript
@@ -77,7 +77,7 @@ npm run build
 ## Project Structure
 
 ```text
-Mobilify/
+Pocketify/
 ├── src/
 │   ├── components/        # UI components (including shadcn/ui)
 │   ├── layouts/           # App layouts (tab layout)

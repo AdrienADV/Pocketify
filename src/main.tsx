@@ -8,6 +8,9 @@ import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from './components/theme-provider';
 import { queryClient } from "@/lib/query-client"
 import { initTransitions } from '@capgo/capacitor-transitions/react';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
+
+CapacitorUpdater.notifyAppReady();
 import '@capgo/capacitor-transitions';
 
 

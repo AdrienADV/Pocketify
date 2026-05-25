@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "Mobilify",
+      "name": "Pocketify",
       "dependencies": {
         "@capacitor/android": "^8.1.0",
         "@capacitor/assets": "^3.0.5",
@@ -19,6 +19,7 @@
         "@capacitor/splash-screen": "^8.0.1",
         "@capgo/capacitor-native-navigation": "^8.0.20",
         "@capgo/capacitor-transitions": "^8.1.5",
+        "@capgo/capacitor-updater": "^8.47.3",
         "@capgo/inappbrowser": "^8.6.13",
         "@tailwindcss/vite": "^4.1.18",
         "@tanstack/react-query": "^5.100.13",
@@ -147,6 +148,8 @@
     "@capgo/capacitor-native-navigation": ["@capgo/capacitor-native-navigation@8.0.21", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-pKJoHfn1eD1VP7sJe0qbmM6JKCNexWNxUTY+4tqkT4tUvwAozzE+IVS64M+7rL9bLWP2i5jreqKIVFwmT2n03A=="],
 
     "@capgo/capacitor-transitions": ["@capgo/capacitor-transitions@8.1.5", "", { "peerDependencies": { "@angular/core": ">=17.0.0", "react": ">=18.0.0", "react-dom": ">=18.0.0", "solid-js": ">=1.0.0", "svelte": ">=4.0.0", "vue": ">=3.0.0" }, "optionalPeers": ["@angular/core", "react", "react-dom", "solid-js", "svelte", "vue"] }, "sha512-2fwzKTbuOB1g8ZTc0PFmv6Ra0mCdEeccHeU3GoTOcx1q3soffb7lyW6ye63yQXv6aY5QUCcCza//GvpEKhgXrg=="],
+
+    "@capgo/capacitor-updater": ["@capgo/capacitor-updater@8.47.3", "", { "peerDependencies": { "@capacitor/core": "^8.0.0" } }, "sha512-IKLr0vAMHjJ/4qEfCt4lenLYNxRneA6kqh09ytuqNIwwnB3rwtljKeLEjlccHaOSbkDJ19TVK3x1O4YETIb3zQ=="],
 
     "@capgo/inappbrowser": ["@capgo/inappbrowser@8.6.13", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-Ktzt7m5CrNs5ESCeeZrtCfimZHGF0+Qp4B3S9JSDkHDwsSad8IfaR+R7wrqRi2ntnSoaO0hbRYG1F1qtPicI0w=="],
 

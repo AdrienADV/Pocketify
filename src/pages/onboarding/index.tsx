@@ -31,7 +31,7 @@ export default function Onboarding() {
           className="flex-1 flex flex-col items-center justify-center gap-5 px-6"
           style={{ paddingTop: "var(--safe-area-top)" }}
         >
-          <img src={appIcon} alt="Mobilify" className="size-20 rounded-3xl shadow-lg" />
+          <img src={appIcon} alt="Pocketify" className="size-20 rounded-3xl shadow-lg" />
           <div className="text-center">
             <h1 className="text-3xl font-bold tracking-tight">Pocketify</h1>
             <p className="text-sm text-muted-foreground mt-1.5">
