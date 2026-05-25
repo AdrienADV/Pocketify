@@ -23,14 +23,26 @@ export function normalizeApiUrl(url: string): string {
   return normalized
 }
 
-export function saveCredentials(apiUrl: string, token: string): void {
+export function getInstanceUrl(): string {
+  return localStorage.getItem("coolify_instance_url") ?? ""
+}
+
+export function saveInstanceUrl(url: string): void {
+  localStorage.setItem("coolify_instance_url", url)
+}
+
+export function saveCredentials(apiUrl: string, token: string, instanceUrl?: string): void {
   localStorage.setItem("coolify_api_url", apiUrl)
   localStorage.setItem("coolify_api_token", token)
+  if (instanceUrl !== undefined) {
+    saveInstanceUrl(instanceUrl)
+  }
 }
 
 export function clearCredentials(): void {
   localStorage.removeItem("coolify_api_url")
   localStorage.removeItem("coolify_api_token")
+  // coolify_instance_url est conservé intentionnellement pour pré-remplir à la prochaine connexion
 }
 
 export async function validateCredentials(apiUrl: string, token: string): Promise<void> {

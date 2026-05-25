@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router"
-import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
+import { setupPage, setDirection, setNavigation } from "@capgo/capacitor-transitions/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,6 +9,7 @@ import {
   normalizeApiUrl,
   saveCredentials,
   validateCredentials,
+  getInstanceUrl,
 } from "@/lib/auth"
 import { Clipboard } from "@capacitor/clipboard"
 import { ChevronLeft, Eye, EyeOff, Loader2, CheckCircle2, XCircle } from "lucide-react"
@@ -23,7 +24,9 @@ export default function OnboardingToken() {
 
   const hostType: HostType = state?.hostType ?? "cloud"
 
-  const [customUrl, setCustomUrl] = useState("")
+  const [customUrl, setCustomUrl] = useState(() =>
+    hostType === "self-hosted" ? getInstanceUrl() : ""
+  )
   const [token, setToken] = useState("")
   const [showToken, setShowToken] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -78,8 +81,8 @@ export default function OnboardingToken() {
       if (tokenStatus !== "valid") {
         await validateCredentials(apiUrl, token.trim())
       }
-      saveCredentials(apiUrl, token.trim())
-      setDirection("forward")
+      saveCredentials(apiUrl, token.trim(), hostType === "self-hosted" ? customUrl.trim() : undefined)
+      setNavigation("root", 'forward')
       navigate("/app", { replace: true })
     } catch (e) {
       setTokenStatus("invalid")
@@ -120,6 +123,13 @@ export default function OnboardingToken() {
                   </span>
                 </>
               )}
+            </p>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              The token must have the following permissions:{" "}
+              <span className="text-foreground font-medium">deploy</span>,{" "}
+              <span className="text-foreground font-medium">read</span>,{" "}
+              <span className="text-foreground font-medium">read:sensitive</span>,{" "}
+              <span className="text-foreground font-medium">write</span>.
             </p>
           </div>
 

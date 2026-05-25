@@ -41,7 +41,6 @@ export function useRestartService(uuid: string) {
     onMutate: () => trackResourceOperation("service", uuid, "restart"),
     mutationFn: () => fetchClient.GET("/services/{uuid}/restart", { params: { path: { uuid } } }),
     onSuccess: () => {
-      toast.success("Restart queued")
       void queryClient.invalidateQueries({ queryKey: serviceKeys.lists })
       void queryClient.invalidateQueries({ queryKey: serviceKeys.detail(uuid) })
     },
@@ -58,7 +57,6 @@ export function useStartService(uuid: string) {
     onMutate: () => trackResourceOperation("service", uuid, "start"),
     mutationFn: () => fetchClient.GET("/services/{uuid}/start", { params: { path: { uuid } } }),
     onSuccess: () => {
-      toast.success("Start requested")
       void queryClient.invalidateQueries({ queryKey: serviceKeys.lists })
       void queryClient.invalidateQueries({ queryKey: serviceKeys.detail(uuid) })
     },
@@ -75,7 +73,6 @@ export function useStopService(uuid: string) {
     onMutate: () => trackResourceOperation("service", uuid, "stop"),
     mutationFn: () => fetchClient.GET("/services/{uuid}/stop", { params: { path: { uuid } } }),
     onSuccess: () => {
-      toast.success("Stop requested")
       void queryClient.invalidateQueries({ queryKey: serviceKeys.lists })
       void queryClient.invalidateQueries({ queryKey: serviceKeys.detail(uuid) })
     },

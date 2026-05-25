@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Cloud, Server, Check } from "lucide-react"
+import appIcon from "@/assets/icon-only.png"
 
 type HostType = "cloud" | "self-hosted"
 
@@ -30,11 +31,9 @@ export default function Onboarding() {
           className="flex-1 flex flex-col items-center justify-center gap-5 px-6"
           style={{ paddingTop: "var(--safe-area-top)" }}
         >
-          <div className="size-20 rounded-3xl bg-primary flex items-center justify-center shadow-lg">
-            <Server className="size-10 text-primary-foreground" />
-          </div>
+          <img src={appIcon} alt="Mobilify" className="size-20 rounded-3xl shadow-lg" />
           <div className="text-center">
-            <h1 className="text-3xl font-bold tracking-tight">Mobilify</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Pocketify</h1>
             <p className="text-sm text-muted-foreground mt-1.5">
               Coolify in your pocket
             </p>

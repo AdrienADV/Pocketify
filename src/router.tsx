@@ -14,6 +14,7 @@ import Services from "./pages/app/services"
 import Servers from "./pages/app/servers"
 import ServerDetail from "./pages/app/server-detail"
 import DeploymentLogs from "./pages/app/deployment-logs"
+import ApplicationRuntimeLogs from "./pages/app/application-runtime-logs"
 import Databases from "./pages/app/databases"
 
 interface RouterProps {
@@ -35,6 +36,7 @@ export default function Router({ location }: Readonly<RouterProps>) {
         </Route>
         <Route path="applications" element={<Applications />} />
         <Route path="applications/:uuid" element={<ApplicationDetail />} />
+        <Route path="applications/:uuid/logs" element={<ApplicationRuntimeLogs />} />
         <Route path="services" element={<Services />} />
         <Route path="servers" element={<Servers />} />
         <Route path="servers/:uuid" element={<ServerDetail />} />

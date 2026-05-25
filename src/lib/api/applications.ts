@@ -36,13 +36,25 @@ export function useApplication(uuid: string | undefined) {
   )
 }
 
+export function useApplicationRuntimeLogs(uuid: string | undefined, lines = 200, enabled = true) {
+  return $api.useQuery(
+    "get",
+    "/applications/{uuid}/logs",
+    { params: { path: { uuid: uuid! }, query: { lines } } },
+    {
+      enabled: !!uuid && enabled,
+      refetchInterval: enabled ? 2000 : false,
+      retry: false,
+    },
+  )
+}
+
 export function useRestartApplication(uuid: string) {
   const queryClient = useQueryClient()
   return useMutation({
     onMutate: () => trackResourceOperation("application", uuid, "restart"),
     mutationFn: () => fetchClient.GET("/applications/{uuid}/restart", { params: { path: { uuid } } }),
     onSuccess: () => {
-      toast.success("Restart queued")
       void queryClient.invalidateQueries({ queryKey: applicationKeys.lists })
       void queryClient.invalidateQueries({ queryKey: applicationKeys.detail(uuid) })
       void queryClient.invalidateQueries({ queryKey: deploymentKeys.byApplication(uuid) })
@@ -60,7 +72,6 @@ export function useStartApplication(uuid: string) {
     onMutate: () => trackResourceOperation("application", uuid, "start"),
     mutationFn: () => fetchClient.GET("/applications/{uuid}/start", { params: { path: { uuid } } }),
     onSuccess: () => {
-      toast.success("Deployment queued")
       void queryClient.invalidateQueries({ queryKey: applicationKeys.lists })
       void queryClient.invalidateQueries({ queryKey: applicationKeys.detail(uuid) })
       void queryClient.invalidateQueries({ queryKey: deploymentKeys.byApplication(uuid) })
@@ -78,7 +89,6 @@ export function useStopApplication(uuid: string) {
     onMutate: () => trackResourceOperation("application", uuid, "stop"),
     mutationFn: () => fetchClient.GET("/applications/{uuid}/stop", { params: { path: { uuid } } }),
     onSuccess: () => {
-      toast.success("Stop requested")
       void queryClient.invalidateQueries({ queryKey: applicationKeys.lists })
       void queryClient.invalidateQueries({ queryKey: applicationKeys.detail(uuid) })
       void queryClient.invalidateQueries({ queryKey: deploymentKeys.byApplication(uuid) })

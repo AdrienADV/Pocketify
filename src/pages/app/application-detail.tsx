@@ -1,5 +1,7 @@
 import { useRef, useEffect } from "react"
 import { useParams, useNavigate } from "react-router"
+import { Capacitor } from "@capacitor/core"
+import { InAppBrowser } from "@capgo/inappbrowser"
 import { setupPage, setDirection } from "@capgo/capacitor-transitions/react"
 import { useApplication, useRestartApplication, useStartApplication, useStopApplication } from "@/lib/api/applications"
 import { useApplicationDeployments } from "@/lib/api/deployments"
@@ -8,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Play, RotateCw, Square, Loader2, GitBranch, Globe, ExternalLink, ChevronRight } from "lucide-react"
+import { Play, RotateCw, Square, Loader2, GitBranch, Globe, ExternalLink, ChevronRight, Terminal } from "lucide-react"
 import type { components } from "@/lib/api/v1"
 import Header from "@/components/header"
 import { PullToRefresh } from "@/components/pull-to-refresh"
@@ -17,6 +19,29 @@ import { statusDotColor, statusLabel, deploymentStatusColor, firstDomain, timeAg
 import { ErrorCard } from "@/components/error-card"
 
 type DeploymentSchema = components["schemas"]["ApplicationDeploymentQueue"]
+
+function normalizeBrowserUrl(url: string) {
+  const trimmed = url.trim()
+  if (!trimmed) return ""
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
+async function openAppUrl(url: string) {
+  const normalized = normalizeBrowserUrl(url)
+  if (!normalized) return
+
+  if (Capacitor.getPlatform() === "web") {
+    window.open(normalized, "_blank")
+    return
+  }
+
+  await InAppBrowser.open({
+    url: normalized,
+    showTitle: true,
+    showArrow: true,
+  })
+}
 
 export default function ApplicationDetail() {
   const pageRef = useRef<HTMLElement>(null)
@@ -52,6 +77,12 @@ export default function ApplicationDetail() {
     if (!deploymentUuid) return
     setDirection("forward")
     navigate(`/deployments/${deploymentUuid}`)
+  }
+
+  const goToRuntimeLogs = () => {
+    if (!uuid) return
+    setDirection("forward")
+    navigate(`/applications/${uuid}/logs`)
   }
 
   return (
@@ -106,6 +137,19 @@ export default function ApplicationDetail() {
                       </Button>
                     )}
                   </div>
+                )}
+
+                {!appPending && (
+                  <Card className="py-0 cursor-pointer active:scale-[0.98] transition-transform" onClick={goToRuntimeLogs}>
+                    <CardContent className="px-4 py-3 flex items-center gap-3">
+                      <Terminal className="size-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">Runtime Logs</p>
+                        <p className="text-xs text-muted-foreground">Container output</p>
+                      </div>
+                      <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                    </CardContent>
+                  </Card>
                 )}
 
                 {/* Info */}
@@ -175,21 +219,32 @@ function InfoRow({
   value,
   href,
 }: Readonly<{ icon: React.ElementType; label: string; value: string; href?: string }>) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3">
+  const content = (
+    <>
       <Icon className="size-4 text-muted-foreground shrink-0" />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 text-left">
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-sm truncate">{value}</p>
       </div>
-      {href && (
-        <button
-          className="size-7 flex items-center justify-center rounded-md text-muted-foreground active:bg-muted shrink-0"
-          onClick={() => window.open(href, "_system")}
-        >
-          <ExternalLink className="size-4" />
-        </button>
-      )}
+      {href && <ExternalLink className="size-4 text-muted-foreground shrink-0" />}
+    </>
+  )
+
+  if (href) {
+    return (
+      <button
+        type="button"
+        className="w-full flex items-center gap-3 px-4 py-3 active:bg-muted"
+        onClick={() => void openAppUrl(href)}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      {content}
     </div>
   )
 }

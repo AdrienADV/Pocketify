@@ -73,7 +73,6 @@ export function useStartDatabase(uuid: string) {
     mutationFn: () =>
       fetchClient.GET("/databases/{uuid}/start", { params: { path: { uuid } } }),
     onSuccess: () => {
-      toast.success("Start requested")
       void queryClient.invalidateQueries({ queryKey: databaseKeys.lists })
       void queryClient.invalidateQueries({ queryKey: databaseKeys.detail(uuid) })
     },
@@ -91,7 +90,6 @@ export function useStopDatabase(uuid: string) {
     mutationFn: () =>
       fetchClient.GET("/databases/{uuid}/stop", { params: { path: { uuid } } }),
     onSuccess: () => {
-      toast.success("Stop requested")
       void queryClient.invalidateQueries({ queryKey: databaseKeys.lists })
       void queryClient.invalidateQueries({ queryKey: databaseKeys.detail(uuid) })
     },
@@ -109,7 +107,6 @@ export function useRestartDatabase(uuid: string) {
     mutationFn: () =>
       fetchClient.GET("/databases/{uuid}/restart", { params: { path: { uuid } } }),
     onSuccess: () => {
-      toast.success("Restart queued")
       void queryClient.invalidateQueries({ queryKey: databaseKeys.lists })
       void queryClient.invalidateQueries({ queryKey: databaseKeys.detail(uuid) })
     },

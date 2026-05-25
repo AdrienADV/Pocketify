@@ -13,7 +13,7 @@ const config: CapacitorConfig = {
       launchShowDuration: 2000,
       launchAutoHide: true,
       launchFadeOutDuration: 500,
-      backgroundColor: "#ffffff",
+      backgroundColor: "#863BFF",
       showSpinner: false,
     },
     Keyboard: {
