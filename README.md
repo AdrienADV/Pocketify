@@ -74,6 +74,13 @@ npm run build
 - `npm run preview` - preview production build
 - `npm run lint` - run ESLint
 
+## App Store Links
+
+GitHub Pages publishes the static pages in `docs/` for App Store Connect:
+
+- Privacy Policy: `https://adrienadv.github.io/Pocketify/privacy/`
+- Support URL: `https://adrienadv.github.io/Pocketify/support/`
+
 ## Project Structure
 
 ```text
