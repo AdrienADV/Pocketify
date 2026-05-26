@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Pocketify is a mobile companion app for Coolify, built to monitor deployments, servers, services, databases, and logs from your phone."
+    />
+    <title>Pocketify - Coolify on your phone</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --background: oklch(0.98 0 0);
+        --foreground: oklch(0.14 0 0);
+        --muted: oklch(0.52 0 0);
+        --panel: oklch(1 0 0);
+        --border: oklch(0.87 0 0);
+        --primary: oklch(0.43 0.28 300);
+        --primary-strong: oklch(0.36 0.26 300);
+        --accent: oklch(0.96 0.02 295);
+        --success: oklch(0.72 0.19 145);
+        --warning: oklch(0.87 0.17 90);
+        --danger: oklch(0.54 0.22 27);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          linear-gradient(180deg, oklch(0.96 0.02 295), transparent 440px),
+          var(--background);
+        color: var(--foreground);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.55;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 28px 0;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+      }
+
+      .brand img {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+      }
+
+      .nav {
+        display: flex;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .nav a {
+        text-decoration: none;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.78fr);
+        gap: clamp(36px, 7vw, 88px);
+        align-items: center;
+        min-height: calc(100svh - 94px);
+        padding: 28px 0 72px;
+      }
+
+      .eyebrow {
+        color: var(--primary-strong);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin: 0 0 16px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 760px;
+        margin: 0;
+        font-size: clamp(3rem, 8vw, 6.75rem);
+        line-height: 0.96;
+      }
+
+      .lead {
+        max-width: 640px;
+        color: var(--muted);
+        font-size: clamp(1.08rem, 2vw, 1.32rem);
+        margin: 24px 0 0;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 34px;
+      }
+
+      .button {
+        align-items: center;
+        border-radius: 8px;
+        display: inline-flex;
+        font-weight: 700;
+        min-height: 46px;
+        padding: 0 18px;
+        text-decoration: none;
+      }
+
+      .button.primary {
+        background: var(--primary);
+        color: white;
+      }
+
+      .button.secondary {
+        border: 1px solid var(--border);
+        color: var(--foreground);
+      }
+
+      .phone {
+        justify-self: center;
+        width: min(330px, 100%);
+        border: 1px solid oklch(0.88 0.02 295);
+        border-radius: 34px;
+        background: oklch(0.1 0 0);
+        box-shadow: 0 26px 80px oklch(0.43 0.28 300 / 0.26);
+        padding: 12px;
+      }
+
+      .screen {
+        min-height: 640px;
+        overflow: hidden;
+        border-radius: 25px;
+        background: oklch(0.98 0 0);
+        color: var(--foreground);
+      }
+
+      .screen-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 18px 12px;
+      }
+
+      .screen-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+      }
+
+      .screen-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+      }
+
+      .metric {
+        margin: 14px 16px 0;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: white;
+        padding: 14px;
+      }
+
+      .metric-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .metric-label {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .metric-value {
+        font-size: 1.35rem;
+        font-weight: 800;
+        margin-top: 2px;
+      }
+
+      .pill {
+        border-radius: 999px;
+        color: oklch(0.28 0.07 145);
+        background: oklch(0.93 0.08 145);
+        font-size: 0.76rem;
+        font-weight: 800;
+        padding: 5px 9px;
+      }
+
+      .logs {
+        margin: 16px;
+        border-radius: 8px;
+        background: oklch(0.13 0 0);
+        color: oklch(0.91 0 0);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.78rem;
+        overflow: hidden;
+        padding: 14px;
+      }
+
+      .logs div + div {
+        margin-top: 8px;
+      }
+
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        margin-right: 8px;
+      }
+
+      .dot.green {
+        background: var(--success);
+      }
+
+      .dot.yellow {
+        background: var(--warning);
+      }
+
+      .dot.red {
+        background: var(--danger);
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        padding: 0 0 64px;
+      }
+
+      .feature {
+        border-top: 1px solid var(--border);
+        padding-top: 18px;
+      }
+
+      .feature h2 {
+        font-size: 1.05rem;
+        margin: 0 0 8px;
+      }
+
+      .feature p {
+        color: var(--muted);
+        margin: 0;
+      }
+
+      footer {
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: space-between;
+        padding: 24px 0 36px;
+      }
+
+      footer a {
+        color: var(--muted);
+      }
+
+      @media (max-width: 820px) {
+        .nav {
+          display: none;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+          min-height: auto;
+          padding-top: 40px;
+        }
+
+        .phone {
+          width: min(310px, 100%);
+        }
+
+        .screen {
+          min-height: 560px;
+        }
+
+        .features {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <a class="brand" href="./" aria-label="Pocketify home">
+          <img src="../assets/icon-only.png" alt="" />
+          <span>Pocketify</span>
+        </a>
+        <nav class="nav" aria-label="Pocketify links">
+          <a href="../privacy/">Privacy</a>
+          <a href="../support/">Support</a>
+          <a href="https://github.com/AdrienADV/Pocketify">GitHub</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero" aria-label="Pocketify overview">
+          <div>
+            <p class="eyebrow">Coolify mobile companion</p>
+            <h1>Pocketify</h1>
+            <p class="lead">
+              Monitor your Coolify applications, services, databases, servers, deployments, and logs from your phone.
+              Connect to Coolify Cloud or your own self-hosted instance with an API token.
+            </p>
+            <div class="actions">
+              <a class="button primary" href="../support/">Get support</a>
+              <a class="button secondary" href="../privacy/">Privacy policy</a>
+            </div>
+          </div>
+
+          <div class="phone" aria-label="Pocketify app preview">
+            <div class="screen">
+              <div class="screen-header">
+                <div>
+                  <div class="metric-label">Pocketify</div>
+                  <div class="screen-title">Dashboard</div>
+                </div>
+                <img class="screen-icon" src="../assets/icon-only.png" alt="" />
+              </div>
+              <div class="metric">
+                <div class="metric-row">
+                  <div>
+                    <div class="metric-label">Applications</div>
+                    <div class="metric-value">12 running</div>
+                  </div>
+                  <span class="pill">Healthy</span>
+                </div>
+              </div>
+              <div class="metric">
+                <div class="metric-row">
+                  <div>
+                    <div class="metric-label">Servers</div>
+                    <div class="metric-value">4 online</div>
+                  </div>
+                  <span class="pill">Synced</span>
+                </div>
+              </div>
+              <div class="logs">
+                <div><span class="dot green"></span>api deployed successfully</div>
+                <div><span class="dot green"></span>worker health check passed</div>
+                <div><span class="dot yellow"></span>database backup scheduled</div>
+                <div><span class="dot green"></span>service restart completed</div>
+                <div><span class="dot red"></span>old preview stopped</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="features" aria-label="Pocketify features">
+          <article class="feature">
+            <h2>Deployment visibility</h2>
+            <p>Follow runtime and deployment logs without opening the Coolify dashboard.</p>
+          </article>
+          <article class="feature">
+            <h2>Server status</h2>
+            <p>Keep an eye on applications, services, databases, and servers from one mobile interface.</p>
+          </article>
+          <article class="feature">
+            <h2>Self-host ready</h2>
+            <p>Use Coolify Cloud or connect Pocketify to your own Coolify instance.</p>
+          </article>
+        </section>
+      </main>
+
+      <footer>
+        <span>© 2026 Pocketify</span>
+        <span><a href="../privacy/">Privacy</a> · <a href="../support/">Support</a></span>
+      </footer>
+    </div>
+  </body>
+</html>

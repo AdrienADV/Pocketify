@@ -80,6 +80,7 @@ GitHub Pages publishes the static pages in `docs/` for App Store Connect:
 
 - Privacy Policy: `https://adrienadv.github.io/Pocketify/privacy/`
 - Support URL: `https://adrienadv.github.io/Pocketify/support/`
+- Marketing URL: `https://adrienadv.github.io/Pocketify/marketing/`
 
 ## Project Structure
 
