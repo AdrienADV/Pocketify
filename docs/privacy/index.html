@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pocketify Privacy Policy</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f7f4;
+        --fg: #171717;
+        --muted: #5f635f;
+        --border: #d8d8d2;
+        --link: #5b2cc7;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111312;
+          --fg: #f4f4f0;
+          --muted: #b8bbb3;
+          --border: #30332f;
+          --link: #b49cff;
+        }
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        width: min(760px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 64px 0;
+      }
+
+      header {
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 36px;
+        padding-bottom: 24px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 6vw, 3.25rem);
+        line-height: 1.05;
+      }
+
+      h2 {
+        font-size: 1.25rem;
+        margin: 32px 0 10px;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      a {
+        color: var(--link);
+      }
+
+      ul {
+        padding-left: 1.25rem;
+      }
+
+      .back {
+        display: inline-block;
+        margin-bottom: 28px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="../">Pocketify legal links</a>
+      <header>
+        <h1>Privacy Policy</h1>
+        <p>Last updated: May 26, 2026</p>
+      </header>
+
+      <p>
+        Pocketify is a mobile companion app for connecting to a Coolify instance.
+        This policy explains what data the app stores and how it is used.
+      </p>
+
+      <h2>Data stored on your device</h2>
+      <p>
+        Pocketify stores your Coolify API URL, instance URL, API token, and app
+        preferences locally on your device so the app can connect to your chosen
+        Coolify instance. This data is not sold and is not used for advertising.
+      </p>
+
+      <h2>Data sent to Coolify</h2>
+      <p>
+        When you use the app, Pocketify sends requests directly to the Coolify API
+        endpoint you configure. Those requests may include your API token and the
+        operational data needed to display or manage your Coolify resources. The
+        handling of that data depends on the Coolify instance you use.
+      </p>
+
+      <h2>Notifications</h2>
+      <p>
+        If you enable push notifications, the operating system may provide a push
+        notification token so notifications can be delivered. Notification
+        permissions are controlled by your device settings.
+      </p>
+
+      <h2>Clipboard access</h2>
+      <p>
+        Pocketify may read from the clipboard only when you use an action that
+        pastes data, such as pasting an API token.
+      </p>
+
+      <h2>Analytics and tracking</h2>
+      <p>
+        Pocketify does not include third-party advertising tracking or analytics
+        in this repository.
+      </p>
+
+      <h2>Deleting your data</h2>
+      <p>
+        You can remove locally stored Pocketify data by signing out in the app or
+        deleting the app from your device. You can also revoke or rotate your
+        Coolify API token from your Coolify dashboard.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        For privacy questions, open an issue in the
+        <a href="https://github.com/AdrienADV/Mobilify/issues">GitHub repository</a>.
+      </p>
+    </main>
+  </body>
+</html>

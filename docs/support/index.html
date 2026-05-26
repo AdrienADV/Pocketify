@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pocketify Support</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f7f4;
+        --fg: #171717;
+        --muted: #5f635f;
+        --border: #d8d8d2;
+        --link: #5b2cc7;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111312;
+          --fg: #f4f4f0;
+          --muted: #b8bbb3;
+          --border: #30332f;
+          --link: #b49cff;
+        }
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        width: min(760px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 64px 0;
+      }
+
+      header {
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 36px;
+        padding-bottom: 24px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 6vw, 3.25rem);
+        line-height: 1.05;
+      }
+
+      h2 {
+        font-size: 1.25rem;
+        margin: 32px 0 10px;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      a {
+        color: var(--link);
+      }
+
+      ul {
+        padding-left: 1.25rem;
+      }
+
+      .back {
+        display: inline-block;
+        margin-bottom: 28px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="../">Pocketify legal links</a>
+      <header>
+        <h1>Support</h1>
+        <p>Help and contact information for Pocketify.</p>
+      </header>
+
+      <h2>Get help</h2>
+      <p>
+        For bugs, questions, or feature requests, open an issue in the
+        <a href="https://github.com/AdrienADV/Mobilify/issues">Pocketify GitHub repository</a>.
+      </p>
+
+      <h2>Before reporting an issue</h2>
+      <ul>
+        <li>Check that your Coolify instance URL is correct.</li>
+        <li>Make sure your Coolify API token is valid and has the required permissions.</li>
+        <li>Include your app version, device model, operating system version, and the steps to reproduce the issue.</li>
+      </ul>
+
+      <h2>Privacy</h2>
+      <p>
+        Read the <a href="../privacy/">Privacy Policy</a> for information about
+        app data, permissions, and local storage.
+      </p>
+    </main>
+  </body>
+</html>
