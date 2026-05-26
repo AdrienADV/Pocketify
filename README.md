@@ -1,54 +1,74 @@
 # Pocketify
 
-Pocketify is a starter boilerplate to ship mobile apps fast with **React + Capacitor + shadcn/ui**.
+Pocketify is an **open-source mobile app** built to manage Coolify from your phone.
 
-It includes:
-- React + Vite + TypeScript
-- Capacitor setup for iOS and Android
-- Tailwind CSS v4 + shadcn/ui components
-- Mobile-first layout with safe-area handling
+> "Coolify in your pocket"
 
-## Tech Stack
+The app connects to the Coolify API (Cloud or self-hosted) using a personal API token, so you can monitor and manage your resources directly on iOS and Android.
 
-- React 19
-- Vite 7
-- TypeScript 5
-- Capacitor 8
-- Tailwind CSS v4
-- shadcn/ui
+## What Pocketify is
+
+Pocketify is the community-driven mobile app for Coolify, designed for real daily usage.
+
+Today, the project already includes:
+
+- connection to **Coolify Cloud** (`app.coolify.io`) or a **self-hosted** instance;
+- authentication with an **API Token**;
+- native mobile navigation powered by Capacitor;
+- dedicated views for applications, services, databases, servers, deployments, and logs.
+
+## Tech stack
+
+- **React 19** + **TypeScript**
+- **Vite** (web build)
+- **Capacitor 8** (native iOS/Android container)
+- **React Router 7**
+- **TanStack React Query**
+- **openapi-fetch** + **openapi-react-query** (typed API client)
+- **Tailwind CSS v4** + UI components
+
+## Open-source philosophy
+
+Pocketify is developed as open source:
+
+- public source code;
+- external contributions are welcome;
+- maintainable architecture to make future improvements easier.
+
+If you use Coolify, you can audit the code, propose improvements, and adapt the app to your own needs.
 
 ## Prerequisites
 
 - Node.js 20+
-- npm
-- For iOS development: Xcode (macOS)
-- For Android development: Android Studio + Android SDK
+- bun
+- iOS: Xcode (macOS)
+- Android: Android Studio + Android SDK
 
-## Quick Start
+## Quick start
 
 1. Install dependencies:
 
 ```bash
-npm install
+bun install
 ```
 
-2. Start the web app:
+2. Start the web app locally:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
-## Mobile Development
+## Mobile development (Capacitor)
 
-This project already contains `ios/` and `android/` native projects.
+The repository already contains native `ios/` and `android/` projects.
 
-### Run Vite for live reload on a real device
+### Live reload on a physical device
 
 ```bash
-npm run dev:mobile
+bun run dev:mobile
 ```
 
-This script exposes Vite on your local network and sets `CAP_SERVER_URL` automatically, so your iOS/Android physical device can use Capacitor live reload.
+This command exposes Vite on your local network and configures the server URL for native apps.
 
 ### Open native projects
 
@@ -57,59 +77,63 @@ npx cap open ios
 npx cap open android
 ```
 
-### Build and sync web assets to native
-
-Use this before native release/testing with bundled assets:
+### Build and sync web assets
 
 ```bash
-npx cap sync
-npm run build
+bun run sync
 ```
 
-## Available Scripts
+## Useful scripts
 
-- `npm run dev` - start Vite dev server
-- `npm run dev:mobile` - start Vite for Capacitor live reload on a real device
-- `npm run build` - build web assets into `dist/`
-- `npm run preview` - preview production build
-- `npm run lint` - run ESLint
+- `bun run dev`: start Vite
+- `bun run dev:mobile`: start mobile live-reload mode
+- `bun run build`: build production web assets
+- `bun run sync`: build + Capacitor sync
+- `bun run preview`: preview production build
+- `bun run lint`: run ESLint
+- `bun run typecheck`: run TypeScript checks
 
-## App Store Links
+## Coolify API configuration
 
-GitHub Pages publishes the static pages in `docs/` for App Store Connect:
+Pocketify uses Coolify API v1.
+
+- default API URL via `VITE_COOLIFY_API_URL`
+- token stored locally on the device
+- support for custom self-hosted URL (normalized with `/api/v1`)
+
+To connect successfully, the token must include the permissions shown in the app onboarding flow.
+
+## App Store Connect links (GitHub Pages)
+
+Static pages inside `docs/` are used for App Store metadata:
 
 - Privacy Policy: `https://adrienadv.github.io/Pocketify/privacy/`
 - Support URL: `https://adrienadv.github.io/Pocketify/support/`
 - Marketing URL: `https://adrienadv.github.io/Pocketify/marketing/`
 
-## Project Structure
+## Project structure
 
 ```text
 Pocketify/
 ├── src/
-│   ├── components/        # UI components (including shadcn/ui)
-│   ├── layouts/           # App layouts (tab layout)
-│   ├── lib/               # Utilities
+│   ├── components/        # UI components
+│   ├── layouts/           # Navigation layouts
+│   ├── lib/               # Auth, API client, utilities
 │   ├── pages/             # App screens
-│   ├── app.tsx            # Root app component
-│   ├── main.tsx           # Providers + router bootstrap
-│   └── router.tsx         # Route definitions
-├── android/               # Native Android project
+│   ├── app.tsx            # Root component
+│   ├── main.tsx           # Providers + bootstrap
+│   └── router.tsx         # Routes
 ├── ios/                   # Native iOS project
-├── scripts/dev-mobile.mjs # Mobile dev server helper
-├── capacitor.config.ts    # Capacitor app configuration
+├── android/               # Native Android project
+├── docs/                  # Published legal/marketing pages
+├── capacitor.config.ts    # Capacitor configuration
+└── package.json
 ```
 
-## Important Config to Update
+## Contributing
 
-Before shipping your app, update:
+1. Fork + feature branch
+2. Develop + run local checks
+3. Open a Pull Request with a clear description
 
-- `capacitor.config.ts`
-  - `appId` (currently `com.example.app`)
-  - `appName`
-- App icons/splash screens in native projects (`ios/` and `android/`)
-
-## Notes
-
-- This boilerplate is mobile-first but can be developed in the browser.
-- Safe-area CSS variables are already configured for notch/status-bar devices.
+Issues and PRs are welcome to improve the mobile experience around Coolify.
